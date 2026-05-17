@@ -108,4 +108,39 @@ describe("Error classes", () => {
       expect(err.status).toBe(503);
     });
   });
+
+  describe("toJSON()", () => {
+    it("serializes VecTradeError", () => {
+      const err = new VecTradeError("base error", { requestId: "req_json" });
+      const json = err.toJSON();
+      expect(json).toEqual({
+        name: "VecTradeError",
+        message: "base error",
+        requestId: "req_json",
+      });
+    });
+
+    it("serializes APIError with status and errorCode", () => {
+      const err = new APIError("rate limited", {
+        status: 429,
+        requestId: "req_rl",
+        errorCode: "RL_001",
+        details: { limit: 100 },
+      });
+      const json = err.toJSON();
+      expect(json.name).toBe("APIError");
+      expect(json.status).toBe(429);
+      expect(json.errorCode).toBe("RL_001");
+      expect(json.details).toEqual({ limit: 100 });
+      expect(json.requestId).toBe("req_rl");
+    });
+
+    it("is JSON.stringify compatible", () => {
+      const err = new APIError("test", { status: 500 });
+      const serialized = JSON.stringify(err);
+      const parsed = JSON.parse(serialized);
+      expect(parsed.name).toBe("APIError");
+      expect(parsed.status).toBe(500);
+    });
+  });
 });

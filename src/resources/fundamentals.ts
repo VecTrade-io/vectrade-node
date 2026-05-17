@@ -1,4 +1,5 @@
 import type { VecTrade } from "../client";
+import { validateSymbol } from "../validate";
 
 export interface FundamentalResponse {
   symbol: string;
@@ -39,7 +40,7 @@ export interface BalanceSheet {
 }
 
 export class Fundamentals {
-  private client: VecTrade;
+  private readonly client: VecTrade;
 
   constructor(client: VecTrade) {
     this.client = client;
@@ -47,6 +48,7 @@ export class Fundamentals {
 
   /** Get fundamental data for a symbol. */
   async get(symbol: string): Promise<FundamentalResponse> {
+    validateSymbol(symbol);
     return this.client.request<FundamentalResponse>(
       "GET",
       `/vq/fundamentals/${encodeURIComponent(symbol)}`

@@ -1,4 +1,5 @@
 import type { VecTrade } from "../client";
+import { validateSymbol } from "../validate";
 
 export interface InsiderTransaction {
   symbol: string;
@@ -24,7 +25,7 @@ export interface InsiderSummary {
 }
 
 export class Insider {
-  private client: VecTrade;
+  private readonly client: VecTrade;
 
   constructor(client: VecTrade) {
     this.client = client;
@@ -32,6 +33,7 @@ export class Insider {
 
   /** Get recent insider transactions for a symbol. */
   async transactions(symbol: string, options?: { limit?: number }): Promise<InsiderTransaction[]> {
+    validateSymbol(symbol);
     const params: Record<string, string> = {};
     if (options?.limit) params.limit = String(options.limit);
     const response = await this.client.request<{ data: InsiderTransaction[] }>(
@@ -44,6 +46,7 @@ export class Insider {
 
   /** Get insider trading summary for a symbol. */
   async summary(symbol: string): Promise<InsiderSummary> {
+    validateSymbol(symbol);
     return this.client.request<InsiderSummary>(
       "GET",
       `/vq/insider/${encodeURIComponent(symbol)}/summary`

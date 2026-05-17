@@ -1,5 +1,8 @@
 /** Cursor-based auto-pagination iterators. */
 
+/** Maximum pages to fetch before stopping (safety limit). */
+const DEFAULT_MAX_PAGES = 1000;
+
 export interface PageResponse<T> {
   data: T[];
   hasMore: boolean;
@@ -18,17 +21,24 @@ export interface PageResponse<T> {
  */
 export class Paginator<T> implements AsyncIterable<T> {
   private fetchPage: (cursor?: string | null) => Promise<PageResponse<T>>;
+  private maxPages: number;
 
-  constructor(fetchPage: (cursor?: string | null) => Promise<PageResponse<T>>) {
+  constructor(
+    fetchPage: (cursor?: string | null) => Promise<PageResponse<T>>,
+    options?: { maxPages?: number }
+  ) {
     this.fetchPage = fetchPage;
+    this.maxPages = options?.maxPages ?? DEFAULT_MAX_PAGES;
   }
 
   async *[Symbol.asyncIterator](): AsyncGenerator<T> {
     let cursor: string | null = null;
     let hasMore = true;
+    let pageCount = 0;
 
-    while (hasMore) {
+    while (hasMore && pageCount < this.maxPages) {
       const page = await this.fetchPage(cursor);
+      pageCount++;
 
       for (const item of page.data) {
         yield item;
@@ -43,9 +53,11 @@ export class Paginator<T> implements AsyncIterable<T> {
   async *pages(): AsyncGenerator<T[]> {
     let cursor: string | null = null;
     let hasMore = true;
+    let pageCount = 0;
 
-    while (hasMore) {
+    while (hasMore && pageCount < this.maxPages) {
       const page = await this.fetchPage(cursor);
+      pageCount++;
       yield page.data;
 
       hasMore = page.hasMore;

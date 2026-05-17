@@ -6,16 +6,17 @@
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "sideEffects": false,
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "require": "./dist/index.cjs",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.cjs"
     },
     "./webhooks": {
+      "types": "./dist/webhooks.d.ts",
       "import": "./dist/webhooks.js",
-      "require": "./dist/webhooks.cjs",
-      "types": "./dist/webhooks.d.ts"
+      "require": "./dist/webhooks.cjs"
     }
   },
   "files": [
@@ -30,7 +31,7 @@
     "test:watch": "vitest",
     "test:bun": "bun test tests/",
     "test:deno": "deno test tests/",
-    "lint": "eslint src/ tests/",
+    "lint": "eslint src/ tests/ benchmarks/",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

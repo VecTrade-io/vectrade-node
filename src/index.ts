@@ -42,6 +42,15 @@ export { Insider } from "./resources/insider";
 export type { InsiderTransaction, InsiderSummary } from "./resources/insider";
 export { WebhooksResource } from "./resources/webhooks";
 export type { WebhookSubscription, CreateWebhookParams } from "./resources/webhooks";
+export { Developer } from "./resources/developer";
+export type {
+  ApiKeyResponse,
+  ApiKeyCreated,
+  UsageResponse,
+  DailyUsageResponse,
+  PlanResponse,
+  QuotaResponse,
+} from "./resources/developer";
 
 // Pagination
 export { Paginator } from "./pagination";
@@ -60,3 +69,6 @@ export type { QuoteResponse } from "./types/quote";
 
 // Transform utilities (§6.3 — snake_case → camelCase)
 export { snakeToCamel, camelCaseKeys } from "./transform";
+
+// Validation utilities
+export { validateSymbol, validateSymbols } from "./validate";

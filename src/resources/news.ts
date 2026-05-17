@@ -14,7 +14,7 @@ export interface NewsArticle {
 }
 
 export class News {
-  private client: VecTrade;
+  private readonly client: VecTrade;
 
   constructor(client: VecTrade) {
     this.client = client;

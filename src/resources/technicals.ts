@@ -1,4 +1,5 @@
 import type { VecTrade } from "../client";
+import { validateSymbol } from "../validate";
 
 export interface CandleData {
   timestamp: string;
@@ -22,7 +23,7 @@ export interface TechnicalResponse {
 }
 
 export class Technicals {
-  private client: VecTrade;
+  private readonly client: VecTrade;
 
   constructor(client: VecTrade) {
     this.client = client;
@@ -37,6 +38,7 @@ export class Technicals {
       period?: number;
     }
   ): Promise<TechnicalResponse> {
+    validateSymbol(symbol);
     const params: Record<string, string> = {
       interval: options?.interval ?? "1d",
       period: String(options?.period ?? 200),

@@ -30,7 +30,7 @@ export interface ScreenerFilters {
 }
 
 export class Screener {
-  private client: VecTrade;
+  private readonly client: VecTrade;
 
   constructor(client: VecTrade) {
     this.client = client;

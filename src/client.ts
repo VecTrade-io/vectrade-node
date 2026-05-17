@@ -48,6 +48,8 @@ export interface RequestOptions {
   body?: string;
   /** Per-request timeout in milliseconds (overrides client default). */
   timeout?: number;
+  /** User-supplied AbortSignal for request cancellation. */
+  signal?: AbortSignal;
 }
 
 /** Metadata from the last API response. */
@@ -178,6 +180,17 @@ export class VecTrade {
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), effectiveTimeout);
+
+      // Forward user-supplied AbortSignal
+      if (options?.signal) {
+        if (options.signal.aborted) {
+          clearTimeout(timeoutId);
+          throw options.signal.reason ?? new Error("Request aborted");
+        }
+        options.signal.addEventListener("abort", () => controller.abort(options.signal!.reason), {
+          once: true,
+        });
+      }
 
       try {
         const response = await fetch(url.toString(), {
@@ -335,7 +348,10 @@ export class VecTrade {
 
     try {
       const response = await fetch(`${base}/health`, {
-        headers: { Authorization: `Bearer ${this.apiKey}` },
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+          "User-Agent": `vectrade-node/${SDK_VERSION}`,
+        },
         signal: controller.signal,
       });
       if (!response.ok) {

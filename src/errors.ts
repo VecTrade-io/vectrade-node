@@ -7,6 +7,14 @@ export class VecTradeError extends Error {
     this.name = "VecTradeError";
     this.requestId = options?.requestId;
   }
+
+  toJSON(): Record<string, unknown> {
+    return {
+      name: this.name,
+      message: this.message,
+      requestId: this.requestId,
+    };
+  }
 }
 
 /** Raised when the SDK is misconfigured. */
@@ -39,6 +47,15 @@ export class APIError extends VecTradeError {
     this.status = options.status;
     this.errorCode = options.errorCode;
     this.details = options.details;
+  }
+
+  override toJSON(): Record<string, unknown> {
+    return {
+      ...super.toJSON(),
+      status: this.status,
+      errorCode: this.errorCode,
+      details: this.details,
+    };
   }
 }
 

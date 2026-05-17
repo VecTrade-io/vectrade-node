@@ -1,4 +1,5 @@
 import type { VecTrade } from "../client";
+import { validateSymbol } from "../validate";
 
 export interface AnalystConsensus {
   symbol: string;
@@ -32,7 +33,7 @@ export interface AnalystRating {
 }
 
 export class Analyst {
-  private client: VecTrade;
+  private readonly client: VecTrade;
 
   constructor(client: VecTrade) {
     this.client = client;
@@ -40,6 +41,7 @@ export class Analyst {
 
   /** Get analyst consensus rating for a symbol. */
   async consensus(symbol: string): Promise<AnalystConsensus> {
+    validateSymbol(symbol);
     return this.client.request<AnalystConsensus>(
       "GET",
       `/vq/analyst/${encodeURIComponent(symbol)}/consensus`
@@ -48,6 +50,7 @@ export class Analyst {
 
   /** Get individual analyst price targets. */
   async priceTargets(symbol: string): Promise<PriceTarget[]> {
+    validateSymbol(symbol);
     const response = await this.client.request<{ data: PriceTarget[] }>(
       "GET",
       `/vq/analyst/${encodeURIComponent(symbol)}/price-targets`
@@ -57,6 +60,7 @@ export class Analyst {
 
   /** Get recent analyst rating changes. */
   async ratings(symbol: string, options?: { limit?: number }): Promise<AnalystRating[]> {
+    validateSymbol(symbol);
     const params: Record<string, string> = {};
     if (options?.limit) params.limit = String(options.limit);
     const response = await this.client.request<{ data: AnalystRating[] }>(

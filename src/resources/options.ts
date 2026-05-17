@@ -1,4 +1,5 @@
 import type { VecTrade } from "../client";
+import { validateSymbol } from "../validate";
 
 export interface OptionContract {
   contractSymbol: string;
@@ -24,7 +25,7 @@ export interface OptionsChain {
 }
 
 export class Options {
-  private client: VecTrade;
+  private readonly client: VecTrade;
 
   constructor(client: VecTrade) {
     this.client = client;
@@ -35,6 +36,7 @@ export class Options {
     symbol: string,
     options?: { expiration?: string; type?: "call" | "put" }
   ): Promise<OptionsChain> {
+    validateSymbol(symbol);
     const params: Record<string, string> = {};
     if (options?.expiration) params.expiration = options.expiration;
     if (options?.type) params.type = options.type;
@@ -45,6 +47,7 @@ export class Options {
 
   /** Get available expiration dates for a symbol. */
   async expirations(symbol: string): Promise<string[]> {
+    validateSymbol(symbol);
     const response = await this.client.request<{ data: string[] }>(
       "GET",
       `/vq/options/${encodeURIComponent(symbol)}/expirations`

@@ -7,7 +7,7 @@ export interface AIChunk {
 }
 
 export class AI {
-  private client: VecTrade;
+  private readonly client: VecTrade;
 
   constructor(client: VecTrade) {
     this.client = client;
@@ -53,9 +53,16 @@ export class AI {
 
         for (const line of lines) {
           if (line.startsWith("data: ")) {
-            const data = JSON.parse(line.slice(6)) as AIChunk;
-            if (data.type === "done") return;
-            yield data;
+            const raw = line.slice(6);
+            if (raw === "[DONE]") return;
+            try {
+              const data = JSON.parse(raw) as AIChunk;
+              if (data.type === "done") return;
+              yield data;
+            } catch {
+              // Non-JSON data line — yield as raw text
+              yield { text: raw, type: "text" as const };
+            }
           }
         }
       }

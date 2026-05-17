@@ -27,6 +27,12 @@ jobs:
       - name: Coverage
         if: matrix.node-version == 20
         run: npx vitest run --coverage
+      - name: Upload coverage
+        if: matrix.node-version == 20
+        uses: codecov/codecov-action@v4
+        with:
+          files: coverage/lcov.info
+          fail_ci_if_error: false
       - name: Verify package
         if: matrix.node-version == 20
         run: npm pack --dry-run

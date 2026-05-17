@@ -7,7 +7,7 @@ import type { VecTrade } from "../client";
  * with developer scope.
  */
 export class Developer {
-  private client: VecTrade;
+  private readonly client: VecTrade;
 
   constructor(client: VecTrade) {
     this.client = client;

@@ -1,4 +1,5 @@
 import type { VecTrade } from "../client";
+import { validateSymbol } from "../validate";
 
 export interface EarningsResult {
   symbol: string;
@@ -24,7 +25,7 @@ export interface EarningsCalendarEntry {
 }
 
 export class Earnings {
-  private client: VecTrade;
+  private readonly client: VecTrade;
 
   constructor(client: VecTrade) {
     this.client = client;
@@ -32,6 +33,7 @@ export class Earnings {
 
   /** Get historical earnings results for a symbol. */
   async history(symbol: string, options?: { limit?: number }): Promise<EarningsResult[]> {
+    validateSymbol(symbol);
     const params: Record<string, string> = {};
     if (options?.limit) params.limit = String(options.limit);
     const response = await this.client.request<{ data: EarningsResult[] }>(
