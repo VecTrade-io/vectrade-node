@@ -1,5 +1,6 @@
 import type { VecTrade } from "../client";
 import { SDK_VERSION } from "../version";
+import { ServerError } from "../errors";
 
 export interface AIChunk {
   text: string;
@@ -36,7 +37,9 @@ export class AI {
       });
 
       if (!response.ok || !response.body) {
-        throw new Error(`AI stream failed: ${response.status}`);
+        throw new ServerError(`AI stream failed: ${response.status}`, {
+          status: response.status,
+        });
       }
 
       const reader = response.body.getReader();

@@ -12,6 +12,7 @@ import { WebhooksResource } from "./resources/webhooks";
 import { Developer } from "./resources/developer";
 import {
   ConfigurationError,
+  VecTradeError,
   APIError,
   AuthenticationError,
   RateLimitError,
@@ -21,6 +22,9 @@ import {
   QuotaExceededError,
   PaymentRequiredError,
   ServiceUnavailableError,
+  TimeoutError,
+  RequestAbortedError,
+  ConnectionError,
 } from "./errors";
 import { SDK_VERSION } from "./version";
 
@@ -61,9 +65,7 @@ export interface ResponseMeta {
   retries: number;
 }
 
-const PRODUCTION_URL = "https://api.vectrade.io/v1";
-// Sandbox uses the same domain — mode is determined by API key prefix (vq_test_ vs vq_live_).
-const SANDBOX_URL = PRODUCTION_URL;
+const BASE_URL = "https://api.vectrade.io/v1";
 
 export class VecTrade {
   readonly apiKey: string;
@@ -111,7 +113,7 @@ export class VecTrade {
     }
 
     this.apiKey = apiKey;
-    this.baseURL = options.baseURL ?? (options.sandbox ? SANDBOX_URL : PRODUCTION_URL);
+    this.baseURL = options.baseURL ?? BASE_URL;
     this.timeout = options.timeout ?? 30_000;
     this.maxRetries = options.maxRetries ?? 2;
 
@@ -143,11 +145,7 @@ export class VecTrade {
   }
 
   /** Make an authenticated request to the VecTrade API. */
-  async request<T>(
-    method: string,
-    path: string,
-    options?: RequestInit & RequestOptions
-  ): Promise<T> {
+  async request<T>(method: string, path: string, options?: RequestOptions): Promise<T> {
     const base = this.baseURL.endsWith("/") ? this.baseURL.slice(0, -1) : this.baseURL;
     const normalizedPath = path.startsWith("/") ? path : `/${path}`;
     const url = new URL(`${base}${normalizedPath}`);
@@ -185,7 +183,7 @@ export class VecTrade {
       if (options?.signal) {
         if (options.signal.aborted) {
           clearTimeout(timeoutId);
-          throw options.signal.reason ?? new Error("Request aborted");
+          throw new RequestAbortedError();
         }
         options.signal.addEventListener("abort", () => controller.abort(options.signal!.reason), {
           once: true,
@@ -193,12 +191,15 @@ export class VecTrade {
       }
 
       try {
-        const response = await fetch(url.toString(), {
-          ...options,
+        const fetchOptions: RequestInit = {
           method,
           headers,
           signal: controller.signal,
-        });
+        };
+        if (options?.body) {
+          fetchOptions.body = options.body;
+        }
+        const response = await fetch(url.toString(), fetchOptions);
 
         if (!response.ok) {
           // Only retry on 429 and 5xx
@@ -222,10 +223,28 @@ export class VecTrade {
         if (error instanceof APIError) {
           throw error;
         }
-        // Retry network errors
+
+        // Distinguish timeout vs user-abort vs network error
+        if (error instanceof Error && error.name === "AbortError") {
+          // If user signal was aborted, don't retry — it's intentional
+          if (options?.signal?.aborted) {
+            throw new RequestAbortedError();
+          }
+          // Otherwise it's our internal timeout
+          throw new TimeoutError(
+            `Request to ${method} ${path} timed out after ${effectiveTimeout}ms`
+          );
+        }
+
+        // Retry transient network errors
         if (attempt < this.maxRetries) {
           lastError = error instanceof Error ? error : new Error(String(error));
           continue;
+        }
+
+        // Wrap unknown errors in ConnectionError for consistent error handling
+        if (error instanceof Error && !(error instanceof VecTradeError)) {
+          throw new ConnectionError(error.message);
         }
         throw error;
       } finally {
@@ -233,7 +252,7 @@ export class VecTrade {
       }
     }
 
-    throw lastError ?? new Error("Request failed after retries");
+    throw lastError ?? new ConnectionError("Request failed after retries");
   }
 
   private async handleErrorResponse(response: Response): Promise<never> {

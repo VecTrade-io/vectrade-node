@@ -9,6 +9,9 @@ import {
   ValidationError,
   QuotaExceededError,
   ServerError,
+  TimeoutError,
+  RequestAbortedError,
+  ConnectionError,
 } from "../src/errors";
 
 describe("Error classes", () => {
@@ -106,6 +109,38 @@ describe("Error classes", () => {
     it("works with 503 status", () => {
       const err = new ServerError("service unavailable", { status: 503 });
       expect(err.status).toBe(503);
+    });
+  });
+
+  describe("TimeoutError", () => {
+    it("inherits from VecTradeError with default message", () => {
+      const err = new TimeoutError();
+      expect(err).toBeInstanceOf(VecTradeError);
+      expect(err.name).toBe("TimeoutError");
+      expect(err.message).toBe("Request timed out");
+    });
+
+    it("accepts custom message", () => {
+      const err = new TimeoutError("GET /slow timed out");
+      expect(err.message).toBe("GET /slow timed out");
+    });
+  });
+
+  describe("RequestAbortedError", () => {
+    it("inherits from VecTradeError with default message", () => {
+      const err = new RequestAbortedError();
+      expect(err).toBeInstanceOf(VecTradeError);
+      expect(err.name).toBe("RequestAbortedError");
+      expect(err.message).toBe("Request was aborted");
+    });
+  });
+
+  describe("ConnectionError", () => {
+    it("inherits from VecTradeError", () => {
+      const err = new ConnectionError("ECONNREFUSED");
+      expect(err).toBeInstanceOf(VecTradeError);
+      expect(err.name).toBe("ConnectionError");
+      expect(err.message).toBe("ECONNREFUSED");
     });
   });
 

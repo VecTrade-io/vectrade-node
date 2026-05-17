@@ -18,6 +18,9 @@ export {
   PaymentRequiredError,
   ServerError,
   ServiceUnavailableError,
+  TimeoutError,
+  RequestAbortedError,
+  ConnectionError,
 } from "./errors";
 
 // Resources

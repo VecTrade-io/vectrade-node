@@ -25,6 +25,30 @@ export class ConfigurationError extends VecTradeError {
   }
 }
 
+/** Raised when a request exceeds the configured timeout. */
+export class TimeoutError extends VecTradeError {
+  constructor(message = "Request timed out") {
+    super(message);
+    this.name = "TimeoutError";
+  }
+}
+
+/** Raised when the user cancels a request via AbortSignal. */
+export class RequestAbortedError extends VecTradeError {
+  constructor(message = "Request was aborted") {
+    super(message);
+    this.name = "RequestAbortedError";
+  }
+}
+
+/** Raised when a network error occurs (connection refused, DNS failure, etc.). */
+export class ConnectionError extends VecTradeError {
+  constructor(message: string) {
+    super(message);
+    this.name = "ConnectionError";
+  }
+}
+
 /** Raised when the API returns an error response. */
 export class APIError extends VecTradeError {
   readonly status: number;
