@@ -44,6 +44,10 @@ export class Technicals {
     if (options?.indicators) {
       params.indicators = options.indicators.join(",");
     }
-    return this.client.request<TechnicalResponse>("GET", `/vq/technicals/${encodeURIComponent(symbol)}`, { params });
+    return this.client.request<TechnicalResponse>(
+      "GET",
+      `/vq/technicals/${encodeURIComponent(symbol)}`,
+      { params }
+    );
   }
 }

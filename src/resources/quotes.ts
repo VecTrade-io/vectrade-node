@@ -14,14 +14,20 @@ export class Quotes {
     if (options?.fields) {
       params.fields = options.fields.join(",");
     }
-    return this.client.request<QuoteResponse>("GET", `/vq/quotes/${encodeURIComponent(symbol)}`, { params });
+    return this.client.request<QuoteResponse>("GET", `/vq/quotes/${encodeURIComponent(symbol)}`, {
+      params,
+    });
   }
 
   /** Get quotes for multiple symbols in a single request. */
   async batch(symbols: string[]): Promise<QuoteResponse[]> {
-    const response = await this.client.request<{ data: QuoteResponse[] }>("GET", "/vq/quotes/batch", {
-      params: { symbols: symbols.join(",") },
-    });
+    const response = await this.client.request<{ data: QuoteResponse[] }>(
+      "GET",
+      "/vq/quotes/batch",
+      {
+        params: { symbols: symbols.join(",") },
+      }
+    );
     return response.data;
   }
 }

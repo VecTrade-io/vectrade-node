@@ -1,4 +1,5 @@
 import type { VecTrade } from "../client";
+import { SDK_VERSION } from "../version";
 
 export interface AIChunk {
   text: string;
@@ -14,40 +15,52 @@ export class AI {
 
   /** Stream an AI analysis response. */
   async *stream(prompt: string): AsyncGenerator<AIChunk> {
-    const url = new URL("/vq/ai/analyze", this.client.baseURL);
+    const base = this.client.baseURL.endsWith("/")
+      ? this.client.baseURL.slice(0, -1)
+      : this.client.baseURL;
+    const url = new URL(`${base}/vq/ai/analyze`);
     const headers = new Headers();
     headers.set("Authorization", `Bearer ${this.client.apiKey}`);
     headers.set("Content-Type", "application/json");
+    headers.set("User-Agent", `vectrade-node/${SDK_VERSION}`);
 
-    const response = await fetch(url.toString(), {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ prompt, stream: true }),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.client.timeout);
 
-    if (!response.ok || !response.body) {
-      throw new Error(`AI stream failed: ${response.status}`);
-    }
+    try {
+      const response = await fetch(url.toString(), {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ prompt, stream: true }),
+        signal: controller.signal,
+      });
 
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
+      if (!response.ok || !response.body) {
+        throw new Error(`AI stream failed: ${response.status}`);
+      }
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
 
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() ?? "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-      for (const line of lines) {
-        if (line.startsWith("data: ")) {
-          const data = JSON.parse(line.slice(6)) as AIChunk;
-          if (data.type === "done") return;
-          yield data;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            const data = JSON.parse(line.slice(6)) as AIChunk;
+            if (data.type === "done") return;
+            yield data;
+          }
         }
       }
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
 }

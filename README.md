@@ -1,6 +1,10 @@
 # @vectrade/sdk
 
-[![License](https://img.shields.io/github/license/VecTrade-io/vectrade-node)](LICENSE) [![Node.js 18+](https://img.shields.io/badge/node-18+-green.svg)](https://nodejs.org/) [![TypeScript](https://img.shields.io/badge/TypeScript-5+-blue.svg)](https://www.typescriptlang.org/)
+[![CI](https://github.com/VecTrade-io/vectrade-node/actions/workflows/ci.yml/badge.svg)](https://github.com/VecTrade-io/vectrade-node/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/@vectrade/sdk)](https://www.npmjs.com/package/@vectrade/sdk)
+[![License](https://img.shields.io/github/license/VecTrade-io/vectrade-node)](LICENSE)
+[![Node.js 18+](https://img.shields.io/badge/node-18+-green.svg)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5+-blue.svg)](https://www.typescriptlang.org/)
 
 Official TypeScript SDK for the [VecTrade](https://vectrade.io) financial data and AI platform.
 
@@ -48,6 +52,45 @@ const vt = new VecTrade({
 });
 ```
 
+## Available Resources
+
+| Resource | Description |
+|----------|-------------|
+| `vt.quotes` | Real-time and historical price quotes |
+| `vt.fundamentals` | Financial statements, ratios, company profiles |
+| `vt.technicals` | Technical indicators (RSI, MACD, Bollinger, etc.) |
+| `vt.news` | Market news and sentiment |
+| `vt.earnings` | Earnings reports and estimates |
+| `vt.analyst` | Analyst ratings and price targets |
+| `vt.insider` | Insider trading activity |
+| `vt.options` | Options chains and Greeks |
+| `vt.screener` | Stock screener with auto-pagination |
+| `vt.webhooks` | Webhook management for real-time alerts |
+| `vt.developer` | API key and usage management |
+| `vt.ai` | AI-powered streaming analysis |
+
+## Error Handling
+
+The SDK throws typed errors for all API failures:
+
+```typescript
+import { VecTrade, RateLimitError, NotFoundError, AuthenticationError } from "@vectrade/sdk";
+
+try {
+  const quote = await vt.quotes.get("INVALID");
+} catch (e) {
+  if (e instanceof NotFoundError) {
+    console.log(`Symbol not found (${e.status}): ${e.message}`);
+  } else if (e instanceof RateLimitError) {
+    console.log(`Rate limited. Retry after ${e.retryAfter}s`);
+  } else if (e instanceof AuthenticationError) {
+    console.log(`Invalid API key: ${e.message}`);
+  }
+}
+```
+
+All errors include `requestId` and `status` for debugging.
+
 ## Webhooks
 
 ```typescript
@@ -69,3 +112,11 @@ console.log(event.type); // "quote.alert.triggered"
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for release history.

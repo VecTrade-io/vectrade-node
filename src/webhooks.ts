@@ -37,7 +37,11 @@ export async function verifyWebhook(params: VerifyWebhookParams): Promise<boolea
  * @returns Parsed WebhookEvent if valid.
  * @throws VecTradeError if signature is invalid or missing.
  */
-export async function verifyWebhook(payload: string, headers: Record<string, string>, secret: string): Promise<WebhookEvent>;
+export async function verifyWebhook(
+  payload: string,
+  headers: Record<string, string>,
+  secret: string
+): Promise<WebhookEvent>;
 export async function verifyWebhook(
   payloadOrParams: string | VerifyWebhookParams,
   headers?: Record<string, string>,

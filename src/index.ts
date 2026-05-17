@@ -2,6 +2,9 @@
 export { VecTrade } from "./client";
 export type { VecTradeOptions, RequestOptions, ResponseMeta } from "./client";
 
+// Version
+export { SDK_VERSION } from "./version";
+
 // Errors
 export {
   VecTradeError,

@@ -1,10 +1,9 @@
 import { bench, describe } from "vitest";
+import { VecTrade } from "../src/client";
 
 describe("Client Initialization", () => {
   bench("create client", () => {
-    // Mock env for benchmarking
     process.env.VECTRADE_API_KEY = "vt_bench_key_placeholder";
-    const { VecTrade } = require("../src/client");
     new VecTrade();
   });
 });

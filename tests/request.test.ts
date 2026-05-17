@@ -29,9 +29,9 @@ describe("client.request() – error mapping", () => {
       http.get(`${BASE}/test`, () =>
         HttpResponse.json(
           { error: { message: "Invalid API key" } },
-          { status: 401, headers: { "x-request-id": "req_401" } },
-        ),
-      ),
+          { status: 401, headers: { "x-request-id": "req_401" } }
+        )
+      )
     );
     const client = makeClient({ maxRetries: 0 });
     await expect(client.request("GET", "/test")).rejects.toThrow(AuthenticationError);
@@ -44,9 +44,7 @@ describe("client.request() – error mapping", () => {
   });
 
   it("maps 403 to AuthenticationError", async () => {
-    server.use(
-      http.get(`${BASE}/test`, () => HttpResponse.text("Forbidden", { status: 403 })),
-    );
+    server.use(http.get(`${BASE}/test`, () => HttpResponse.text("Forbidden", { status: 403 })));
     const client = makeClient({ maxRetries: 0 });
     await expect(client.request("GET", "/test")).rejects.toThrow(AuthenticationError);
   });
@@ -56,9 +54,9 @@ describe("client.request() – error mapping", () => {
       http.get(`${BASE}/test`, () =>
         HttpResponse.json(
           { error: { message: "Not found" } },
-          { status: 404, headers: { "x-request-id": "req_nf" } },
-        ),
-      ),
+          { status: 404, headers: { "x-request-id": "req_nf" } }
+        )
+      )
     );
     const client = makeClient({ maxRetries: 0 });
     await expect(client.request("GET", "/test")).rejects.toThrow(NotFoundError);
@@ -67,13 +65,13 @@ describe("client.request() – error mapping", () => {
   it("maps 422 to ValidationError", async () => {
     server.use(
       http.post(`${BASE}/test`, () =>
-        HttpResponse.json({ error: { message: "Invalid params" } }, { status: 422 }),
-      ),
+        HttpResponse.json({ error: { message: "Invalid params" } }, { status: 422 })
+      )
     );
     const client = makeClient({ maxRetries: 0 });
-    await expect(
-      client.request("POST", "/test", { body: JSON.stringify({}) }),
-    ).rejects.toThrow(ValidationError);
+    await expect(client.request("POST", "/test", { body: JSON.stringify({}) })).rejects.toThrow(
+      ValidationError
+    );
   });
 
   it("maps 429 to RateLimitError with retryAfter", async () => {
@@ -82,8 +80,8 @@ describe("client.request() – error mapping", () => {
         HttpResponse.text("Rate limited", {
           status: 429,
           headers: { "Retry-After": "3.5" },
-        }),
-      ),
+        })
+      )
     );
     const client = makeClient({ maxRetries: 0 });
     try {
@@ -96,9 +94,7 @@ describe("client.request() – error mapping", () => {
 
   it("maps 500 to ServerError", async () => {
     server.use(
-      http.get(`${BASE}/test`, () =>
-        HttpResponse.text("Internal Server Error", { status: 500 }),
-      ),
+      http.get(`${BASE}/test`, () => HttpResponse.text("Internal Server Error", { status: 500 }))
     );
     const client = makeClient({ maxRetries: 0 });
     await expect(client.request("GET", "/test")).rejects.toThrow(ServerError);
@@ -106,18 +102,14 @@ describe("client.request() – error mapping", () => {
 
   it("maps 503 to ServerError", async () => {
     server.use(
-      http.get(`${BASE}/test`, () =>
-        HttpResponse.text("Service Unavailable", { status: 503 }),
-      ),
+      http.get(`${BASE}/test`, () => HttpResponse.text("Service Unavailable", { status: 503 }))
     );
     const client = makeClient({ maxRetries: 0 });
     await expect(client.request("GET", "/test")).rejects.toThrow(ServerError);
   });
 
   it("maps unknown 4xx to APIError", async () => {
-    server.use(
-      http.get(`${BASE}/test`, () => HttpResponse.text("Teapot", { status: 418 })),
-    );
+    server.use(http.get(`${BASE}/test`, () => HttpResponse.text("Teapot", { status: 418 })));
     const client = makeClient({ maxRetries: 0 });
     await expect(client.request("GET", "/test")).rejects.toThrow(APIError);
     try {
@@ -138,7 +130,7 @@ describe("client.request() – retry behavior", () => {
           return HttpResponse.text("Rate limited", { status: 429 });
         }
         return HttpResponse.json({ ok: true });
-      }),
+      })
     );
     const client = makeClient({ maxRetries: 2 });
     const result = await client.request<{ ok: boolean }>("GET", "/test");
@@ -155,7 +147,7 @@ describe("client.request() – retry behavior", () => {
           return HttpResponse.text("Error", { status: 500 });
         }
         return HttpResponse.json({ ok: true });
-      }),
+      })
     );
     const client = makeClient({ maxRetries: 2 });
     const result = await client.request<{ ok: boolean }>("GET", "/test");
@@ -169,7 +161,7 @@ describe("client.request() – retry behavior", () => {
       http.get(`${BASE}/test`, () => {
         calls++;
         return HttpResponse.json({ error: "not found" }, { status: 404 });
-      }),
+      })
     );
     const client = makeClient({ maxRetries: 3 });
     await expect(client.request("GET", "/test")).rejects.toThrow(NotFoundError);
@@ -177,9 +169,7 @@ describe("client.request() – retry behavior", () => {
   });
 
   it("throws after exhausting retries on 500", async () => {
-    server.use(
-      http.get(`${BASE}/test`, () => HttpResponse.text("Error", { status: 500 })),
-    );
+    server.use(http.get(`${BASE}/test`, () => HttpResponse.text("Error", { status: 500 })));
     const client = makeClient({ maxRetries: 1 });
     await expect(client.request("GET", "/test")).rejects.toThrow(ServerError);
   });
@@ -192,7 +182,7 @@ describe("client.request() – idempotency key", () => {
       http.post(`${BASE}/test`, ({ request }) => {
         receivedKey = request.headers.get("idempotency-key");
         return HttpResponse.json({ ok: true });
-      }),
+      })
     );
     const client = makeClient({ maxRetries: 0 });
     await client.request("POST", "/test", {
@@ -208,7 +198,7 @@ describe("client.request() – idempotency key", () => {
       http.get(`${BASE}/test`, ({ request }) => {
         receivedKey = request.headers.get("idempotency-key");
         return HttpResponse.json({ ok: true });
-      }),
+      })
     );
     const client = makeClient({ maxRetries: 0 });
     await client.request("GET", "/test");
@@ -227,9 +217,9 @@ describe("client.request() – response metadata", () => {
               "x-request-id": "req_meta_123",
               "x-vq-ratelimit-remaining": "42",
             },
-          },
-        ),
-      ),
+          }
+        )
+      )
     );
     const client = makeClient({ maxRetries: 0 });
     await client.request("GET", "/test");
@@ -242,9 +232,7 @@ describe("client.request() – response metadata", () => {
   });
 
   it("handles missing metadata headers gracefully", async () => {
-    server.use(
-      http.get(`${BASE}/test`, () => HttpResponse.json({ data: "ok" })),
-    );
+    server.use(http.get(`${BASE}/test`, () => HttpResponse.json({ data: "ok" })));
     const client = makeClient({ maxRetries: 0 });
     await client.request("GET", "/test");
     expect(client.lastResponseMeta?.requestId).toBeUndefined();
@@ -254,11 +242,7 @@ describe("client.request() – response metadata", () => {
 
 describe("client.request() – successful request", () => {
   it("returns parsed JSON on 200", async () => {
-    server.use(
-      http.get(`${BASE}/test`, () =>
-        HttpResponse.json({ symbol: "AAPL", price: 195 }),
-      ),
-    );
+    server.use(http.get(`${BASE}/test`, () => HttpResponse.json({ symbol: "AAPL", price: 195 })));
     const client = makeClient({ maxRetries: 0 });
     const data = await client.request<{ symbol: string; price: number }>("GET", "/test");
     expect(data.symbol).toBe("AAPL");
@@ -271,7 +255,7 @@ describe("client.request() – successful request", () => {
       http.get(`${BASE}/test`, ({ request }) => {
         authHeader = request.headers.get("authorization");
         return HttpResponse.json({ ok: true });
-      }),
+      })
     );
     const client = makeClient({ maxRetries: 0 });
     await client.request("GET", "/test");

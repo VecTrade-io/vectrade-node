@@ -1,0 +1,25 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      dev-tools:
+        patterns:
+          - "eslint*"
+          - "@eslint/*"
+          - "prettier"
+          - "typescript*"
+          - "vitest"
+          - "@vitest/*"
+          - "tsup"
+          - "@types/*"
+      test:
+        patterns:
+          - "msw"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

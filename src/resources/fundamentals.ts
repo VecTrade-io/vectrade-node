@@ -47,22 +47,39 @@ export class Fundamentals {
 
   /** Get fundamental data for a symbol. */
   async get(symbol: string): Promise<FundamentalResponse> {
-    return this.client.request<FundamentalResponse>("GET", `/vq/fundamentals/${encodeURIComponent(symbol)}`);
+    return this.client.request<FundamentalResponse>(
+      "GET",
+      `/vq/fundamentals/${encodeURIComponent(symbol)}`
+    );
   }
 
   /** Get income statements. */
-  async incomeStatement(symbol: string, options?: { period?: "annual" | "quarterly" }): Promise<IncomeStatement[]> {
-    const response = await this.client.request<{ data: IncomeStatement[] }>("GET", `/vq/fundamentals/${encodeURIComponent(symbol)}/income`, {
-      params: { period: options?.period ?? "annual" },
-    });
+  async incomeStatement(
+    symbol: string,
+    options?: { period?: "annual" | "quarterly" }
+  ): Promise<IncomeStatement[]> {
+    const response = await this.client.request<{ data: IncomeStatement[] }>(
+      "GET",
+      `/vq/fundamentals/${encodeURIComponent(symbol)}/income`,
+      {
+        params: { period: options?.period ?? "annual" },
+      }
+    );
     return response.data;
   }
 
   /** Get balance sheets. */
-  async balanceSheet(symbol: string, options?: { period?: "annual" | "quarterly" }): Promise<BalanceSheet[]> {
-    const response = await this.client.request<{ data: BalanceSheet[] }>("GET", `/vq/fundamentals/${encodeURIComponent(symbol)}/balance-sheet`, {
-      params: { period: options?.period ?? "annual" },
-    });
+  async balanceSheet(
+    symbol: string,
+    options?: { period?: "annual" | "quarterly" }
+  ): Promise<BalanceSheet[]> {
+    const response = await this.client.request<{ data: BalanceSheet[] }>(
+      "GET",
+      `/vq/fundamentals/${encodeURIComponent(symbol)}/balance-sheet`,
+      {
+        params: { period: options?.period ?? "annual" },
+      }
+    );
     return response.data;
   }
 }

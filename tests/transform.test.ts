@@ -49,14 +49,8 @@ describe("camelCaseKeys", () => {
   });
 
   it("converts array elements", () => {
-    const result = camelCaseKeys([
-      { ticker_symbol: "AAPL" },
-      { ticker_symbol: "GOOGL" },
-    ]);
-    expect(result).toEqual([
-      { tickerSymbol: "AAPL" },
-      { tickerSymbol: "GOOGL" },
-    ]);
+    const result = camelCaseKeys([{ ticker_symbol: "AAPL" }, { ticker_symbol: "GOOGL" }]);
+    expect(result).toEqual([{ tickerSymbol: "AAPL" }, { tickerSymbol: "GOOGL" }]);
   });
 
   it("handles mixed arrays and nested objects", () => {

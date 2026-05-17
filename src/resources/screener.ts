@@ -50,14 +50,17 @@ export class Screener {
       if (filters.marketCapMax !== undefined) params.market_cap_max = String(filters.marketCapMax);
       if (filters.peMax !== undefined) params.pe_max = String(filters.peMax);
       if (filters.peMin !== undefined) params.pe_min = String(filters.peMin);
-      if (filters.dividendYieldMin !== undefined) params.dividend_yield_min = String(filters.dividendYieldMin);
+      if (filters.dividendYieldMin !== undefined)
+        params.dividend_yield_min = String(filters.dividendYieldMin);
       if (filters.sector) params.sector = filters.sector;
       if (filters.industry) params.industry = filters.industry;
       if (cursor) params.cursor = cursor;
 
-      const response = await this.client.request<{ data: ScreenerResult[]; has_more: boolean; cursor: string | null }>(
-        "GET", "/vq/screener", { params }
-      );
+      const response = await this.client.request<{
+        data: ScreenerResult[];
+        has_more: boolean;
+        cursor: string | null;
+      }>("GET", "/vq/screener", { params });
       return {
         data: response.data,
         hasMore: response.has_more,

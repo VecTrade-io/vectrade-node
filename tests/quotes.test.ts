@@ -84,7 +84,11 @@ describe("Quotes resource", () => {
         })
       );
 
-      const retryClient = new VecTrade({ apiKey: "vq_test_mock_key12345", maxRetries: 2, timeout: 5000 });
+      const retryClient = new VecTrade({
+        apiKey: "vq_test_mock_key12345",
+        maxRetries: 2,
+        timeout: 5000,
+      });
       const quote = await retryClient.quotes.get("RETRY");
       expect(quote.symbol).toBe("RETRY");
       expect(attempts).toBe(2);
@@ -93,11 +97,18 @@ describe("Quotes resource", () => {
     it("throws after exhausting retries", async () => {
       server.use(
         http.get("https://api.vectrade.io/v1/vq/quotes/:symbol", () => {
-          return HttpResponse.json({ error: { message: "server down", type: "server_error" } }, { status: 500 });
+          return HttpResponse.json(
+            { error: { message: "server down", type: "server_error" } },
+            { status: 500 }
+          );
         })
       );
 
-      const retryClient = new VecTrade({ apiKey: "vq_test_mock_key12345", maxRetries: 1, timeout: 5000 });
+      const retryClient = new VecTrade({
+        apiKey: "vq_test_mock_key12345",
+        maxRetries: 1,
+        timeout: 5000,
+      });
       await expect(retryClient.quotes.get("FAIL")).rejects.toThrow();
     });
   });

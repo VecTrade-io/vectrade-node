@@ -21,7 +21,11 @@ export class News {
   }
 
   /** Get latest financial news. */
-  async list(options?: { symbols?: string[]; category?: string; limit?: number }): Promise<NewsArticle[]> {
+  async list(options?: {
+    symbols?: string[];
+    category?: string;
+    limit?: number;
+  }): Promise<NewsArticle[]> {
     const params: Record<string, string> = {
       limit: String(options?.limit ?? 20),
     };
@@ -31,7 +35,9 @@ export class News {
     if (options?.category) {
       params.category = options.category;
     }
-    const response = await this.client.request<{ data: NewsArticle[] }>("GET", "/vq/news", { params });
+    const response = await this.client.request<{ data: NewsArticle[] }>("GET", "/vq/news", {
+      params,
+    });
     return response.data;
   }
 

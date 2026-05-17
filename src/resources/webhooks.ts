@@ -35,7 +35,10 @@ export class WebhooksResource {
 
   /** List all webhook subscriptions. */
   async list(): Promise<WebhookSubscription[]> {
-    const response = await this.client.request<{ data: WebhookSubscription[] }>("GET", "/vq/webhooks");
+    const response = await this.client.request<{ data: WebhookSubscription[] }>(
+      "GET",
+      "/vq/webhooks"
+    );
     return response.data;
   }
 

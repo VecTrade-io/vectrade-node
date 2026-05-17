@@ -10,7 +10,19 @@ import { Earnings } from "./resources/earnings";
 import { Insider } from "./resources/insider";
 import { WebhooksResource } from "./resources/webhooks";
 import { Developer } from "./resources/developer";
-import { ConfigurationError, APIError, AuthenticationError, RateLimitError, NotFoundError, ValidationError, ServerError, QuotaExceededError, PaymentRequiredError, ServiceUnavailableError } from "./errors";
+import {
+  ConfigurationError,
+  APIError,
+  AuthenticationError,
+  RateLimitError,
+  NotFoundError,
+  ValidationError,
+  ServerError,
+  QuotaExceededError,
+  PaymentRequiredError,
+  ServiceUnavailableError,
+} from "./errors";
+import { SDK_VERSION } from "./version";
 
 export interface VecTradeOptions {
   /** API key. Defaults to VECTRADE_API_KEY env var. */
@@ -50,7 +62,6 @@ export interface ResponseMeta {
 const PRODUCTION_URL = "https://api.vectrade.io/v1";
 // Sandbox uses the same domain — mode is determined by API key prefix (vq_test_ vs vq_live_).
 const SANDBOX_URL = PRODUCTION_URL;
-const SDK_VERSION = "0.1.0";
 
 export class VecTrade {
   readonly apiKey: string;
@@ -87,7 +98,9 @@ export class VecTrade {
   readonly developer: Developer;
 
   constructor(options: VecTradeOptions = {}) {
-    const apiKey = options.apiKey ?? (typeof process !== "undefined" ? process.env?.VECTRADE_API_KEY : undefined);
+    const apiKey =
+      options.apiKey ??
+      (typeof process !== "undefined" ? process.env?.VECTRADE_API_KEY : undefined);
 
     if (!apiKey) {
       throw new ConfigurationError(
@@ -108,7 +121,7 @@ export class VecTrade {
       if (typeof console !== "undefined") {
         console.warn(
           `[VecTrade] base URL uses non-HTTPS scheme (${this.baseURL}). ` +
-          `This is insecure and should only be used for local development.`
+            `This is insecure and should only be used for local development.`
         );
       }
     }
@@ -128,7 +141,11 @@ export class VecTrade {
   }
 
   /** Make an authenticated request to the VecTrade API. */
-  async request<T>(method: string, path: string, options?: RequestInit & RequestOptions): Promise<T> {
+  async request<T>(
+    method: string,
+    path: string,
+    options?: RequestInit & RequestOptions
+  ): Promise<T> {
     const base = this.baseURL.endsWith("/") ? this.baseURL.slice(0, -1) : this.baseURL;
     const normalizedPath = path.startsWith("/") ? path : `/${path}`;
     const url = new URL(`${base}${normalizedPath}`);
@@ -183,7 +200,7 @@ export class VecTrade {
         this.lastResponseMeta = {
           requestId: response.headers.get("x-request-id") ?? undefined,
           rateLimitRemaining: parseNumberHeader(response.headers.get("x-vq-ratelimit-remaining")),
-          rateLimitReset: undefined,  // Finance core does not send this header
+          rateLimitReset: undefined, // Finance core does not send this header
           retries: attempt,
         };
 
@@ -318,7 +335,7 @@ export class VecTrade {
 
     try {
       const response = await fetch(`${base}/health`, {
-        headers: { "Authorization": `Bearer ${this.apiKey}` },
+        headers: { Authorization: `Bearer ${this.apiKey}` },
         signal: controller.signal,
       });
       if (!response.ok) {

@@ -8,7 +8,7 @@ interface TestItem {
 
 describe("Paginator", () => {
   it("iterates over a single page", async () => {
-    const paginator = new Paginator<TestItem>(async (cursor) => ({
+    const paginator = new Paginator<TestItem>(async (_cursor) => ({
       data: [
         { id: 1, name: "first" },
         { id: 2, name: "second" },
@@ -59,7 +59,10 @@ describe("Paginator", () => {
     const paginator = new Paginator<TestItem>(async (cursor) => {
       if (!cursor) {
         return {
-          data: [{ id: 1, name: "a" }, { id: 2, name: "b" }],
+          data: [
+            { id: 1, name: "a" },
+            { id: 2, name: "b" },
+          ],
           hasMore: true,
           cursor: "p2",
         };
@@ -82,7 +85,7 @@ describe("Paginator", () => {
 
   it("supports take() to limit results", async () => {
     let callCount = 0;
-    const paginator = new Paginator<TestItem>(async (cursor) => {
+    const paginator = new Paginator<TestItem>(async (_cursor) => {
       callCount++;
       const id = callCount;
       return {

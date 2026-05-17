@@ -40,7 +40,10 @@ export class Analyst {
 
   /** Get analyst consensus rating for a symbol. */
   async consensus(symbol: string): Promise<AnalystConsensus> {
-    return this.client.request<AnalystConsensus>("GET", `/vq/analyst/${encodeURIComponent(symbol)}/consensus`);
+    return this.client.request<AnalystConsensus>(
+      "GET",
+      `/vq/analyst/${encodeURIComponent(symbol)}/consensus`
+    );
   }
 
   /** Get individual analyst price targets. */

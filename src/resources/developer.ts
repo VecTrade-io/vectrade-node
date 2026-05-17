@@ -41,7 +41,9 @@ export class Developer {
     if (options?.days) {
       params.days = String(Math.min(options.days, 90));
     }
-    return this.client.request<DailyUsageResponse[]>("GET", "/vq/developer/usage/daily", { params });
+    return this.client.request<DailyUsageResponse[]>("GET", "/vq/developer/usage/daily", {
+      params,
+    });
   }
 
   /** Get the user's active subscription details. */
