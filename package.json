@@ -18,7 +18,11 @@
       "types": "./dist/webhooks.d.ts"
     }
   },
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
@@ -47,7 +51,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/VecTrade-io/vectrade-node"
+    "url": "git+https://github.com/VecTrade-io/vectrade-node.git"
   },
   "homepage": "https://docs.vectrade.io/sdks/typescript",
   "bugs": {
@@ -57,12 +61,14 @@
     "node": ">=18"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.4",
     "@types/node": "^22.0.0",
     "eslint": "^9.0.0",
     "msw": "^2.3.0",
     "prettier": "^3.3.0",
     "tsup": "^8.1.0",
     "typescript": "^5.5.0",
+    "typescript-eslint": "^8.59.3",
     "vitest": "^2.0.0"
   }
 }
