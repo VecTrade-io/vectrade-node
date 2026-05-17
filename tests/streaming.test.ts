@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { parseSSEStream } from "../src/streaming";
+import { parseSSEStream, toReadableStream } from "../src/streaming";
+import { ConnectionError } from "../src/errors";
 
 function createReadableStream(lines: string[]): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder();
@@ -63,6 +64,37 @@ describe("Streaming SSE", () => {
       }
       expect(events[0]).toHaveProperty("content", "x");
       expect(events[0]).toHaveProperty("model", "vt-analyst");
+    });
+
+    it("throws ConnectionError when body is null", async () => {
+      const fakeResponse = { body: null } as unknown as Response;
+      const gen = parseSSEStream(fakeResponse);
+      await expect(gen.next()).rejects.toBeInstanceOf(ConnectionError);
+    });
+  });
+
+  describe("toReadableStream", () => {
+    it("converts SSE response to text ReadableStream", async () => {
+      const stream = createReadableStream([
+        'data: {"content": "chunk1"}',
+        'data: {"content": "chunk2"}',
+        "data: [DONE]",
+      ]);
+      const fakeResponse = { body: stream } as unknown as Response;
+      const readable = toReadableStream(fakeResponse);
+      const reader = readable.getReader();
+
+      const r1 = await reader.read();
+      expect(r1.value).toBe("chunk1");
+      const r2 = await reader.read();
+      expect(r2.value).toBe("chunk2");
+    });
+
+    it("propagates errors to the stream consumer", async () => {
+      const fakeResponse = { body: null } as unknown as Response;
+      const readable = toReadableStream(fakeResponse);
+      const reader = readable.getReader();
+      await expect(reader.read()).rejects.toBeInstanceOf(ConnectionError);
     });
   });
 });

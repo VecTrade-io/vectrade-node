@@ -79,11 +79,15 @@ export function toReadableStream(response: Response): ReadableStream<string> {
 
   return new ReadableStream<string>({
     async pull(controller) {
-      const { done, value } = await generator.next();
-      if (done) {
-        controller.close();
-      } else {
-        controller.enqueue(value.content ?? "");
+      try {
+        const { done, value } = await generator.next();
+        if (done) {
+          controller.close();
+        } else {
+          controller.enqueue(value.content ?? "");
+        }
+      } catch (error) {
+        controller.error(error);
       }
     },
     cancel() {

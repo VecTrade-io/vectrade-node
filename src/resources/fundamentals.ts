@@ -60,6 +60,7 @@ export class Fundamentals {
     symbol: string,
     options?: { period?: "annual" | "quarterly" }
   ): Promise<IncomeStatement[]> {
+    validateSymbol(symbol);
     const response = await this.client.request<{ data: IncomeStatement[] }>(
       "GET",
       `/vq/fundamentals/${encodeURIComponent(symbol)}/income`,
@@ -75,6 +76,7 @@ export class Fundamentals {
     symbol: string,
     options?: { period?: "annual" | "quarterly" }
   ): Promise<BalanceSheet[]> {
+    validateSymbol(symbol);
     const response = await this.client.request<{ data: BalanceSheet[] }>(
       "GET",
       `/vq/fundamentals/${encodeURIComponent(symbol)}/balance-sheet`,

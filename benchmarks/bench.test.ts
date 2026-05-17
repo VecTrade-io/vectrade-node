@@ -3,8 +3,7 @@ import { VecTrade } from "../src/client";
 
 describe("Client Initialization", () => {
   bench("create client", () => {
-    process.env.VECTRADE_API_KEY = "vt_bench_key_placeholder";
-    new VecTrade();
+    new VecTrade({ apiKey: "vq_bench_key_placeholder12345" });
   });
 });
 
