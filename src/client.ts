@@ -33,8 +33,6 @@ export interface VecTradeOptions {
   apiKey?: string;
   /** Custom base URL. */
   baseURL?: string;
-  /** Use sandbox environment. */
-  sandbox?: boolean;
   /** Request timeout in milliseconds. Default: 30000. */
   timeout?: number;
   /** Maximum automatic retries on 429/5xx. Default: 2. */
@@ -377,6 +375,12 @@ export class VecTrade {
         await this.handleErrorResponse(response);
       }
       return (await response.json()) as Record<string, unknown>;
+    } catch (error) {
+      if (error instanceof VecTradeError) throw error;
+      if (error instanceof Error && error.name === "AbortError") {
+        throw new TimeoutError(`Health check timed out after ${effectiveTimeout}ms`);
+      }
+      throw new ConnectionError(error instanceof Error ? error.message : "Health check failed");
     } finally {
       clearTimeout(timeoutId);
     }

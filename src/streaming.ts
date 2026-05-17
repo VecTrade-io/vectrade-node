@@ -1,5 +1,7 @@
 /** SSE streaming utilities using Web Streams API. */
 
+import { ConnectionError } from "./errors";
+
 export interface StreamChunk {
   content?: string;
   done?: boolean;
@@ -19,7 +21,7 @@ export async function* parseSSEStream(
 ): AsyncGenerator<StreamChunk> {
   const stream = input instanceof ReadableStream ? input : input.body;
   if (!stream) {
-    throw new Error("Response body is null");
+    throw new ConnectionError("Response body is null — cannot parse SSE stream");
   }
 
   const reader = stream.getReader();

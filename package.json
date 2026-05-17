@@ -29,12 +29,13 @@
     "dev": "tsup --watch",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:bun": "bun test tests/",
-    "test:deno": "deno test tests/",
+    "test:coverage": "vitest run --coverage",
+    "bench": "vitest bench",
     "lint": "eslint src/ tests/ benchmarks/",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "clean": "rm -rf dist coverage",
     "prepublishOnly": "npm run build"
   },
   "keywords": [

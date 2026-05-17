@@ -46,7 +46,7 @@ for await (const chunk of vt.ai.stream("Analyze AAPL for long-term hold")) {
 ```typescript
 const vt = new VecTrade({
   apiKey: "vq_live_...",      // or set VECTRADE_API_KEY
-  sandbox: true,              // use sandbox environment
+  baseURL: "https://...",     // custom endpoint (optional)
   timeout: 60_000,            // request timeout (ms)
   maxRetries: 3,              // retry on 429/5xx
 });

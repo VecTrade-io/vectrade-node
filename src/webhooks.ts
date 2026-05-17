@@ -1,5 +1,7 @@
 /** Webhook verification utilities. */
 
+import { VecTradeError } from "./errors";
+
 const SIGNATURE_HEADER = "x-vq-signature";
 const TIMESTAMP_HEADER = "x-vq-timestamp";
 const TOLERANCE_SECONDS = 300; // 5 minutes
@@ -67,19 +69,19 @@ export async function verifyWebhook(
   const ts = headers?.[TIMESTAMP_HEADER];
 
   if (!sig || !ts || !secret) {
-    throw new Error("Missing webhook signature headers");
+    throw new VecTradeError("Missing webhook signature headers (x-vq-signature, x-vq-timestamp)");
   }
 
   // Check timestamp tolerance
   const tsNum = parseInt(ts, 10);
   const now = Math.floor(Date.now() / 1000);
   if (Math.abs(now - tsNum) > TOLERANCE_SECONDS) {
-    throw new Error("Webhook timestamp outside tolerance window");
+    throw new VecTradeError("Webhook timestamp outside tolerance window");
   }
 
   const isValid = await computeAndCompare(payloadOrParams, sig, ts, secret);
   if (!isValid) {
-    throw new Error("Invalid webhook signature");
+    throw new VecTradeError("Invalid webhook signature");
   }
 
   return JSON.parse(payloadOrParams) as WebhookEvent;
