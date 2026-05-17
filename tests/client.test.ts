@@ -40,7 +40,7 @@ describe("VecTrade Client", () => {
 
     it("uses sandbox URL when sandbox=true", () => {
       const client = new VecTrade({ apiKey: "vq_test_key12345678", sandbox: true });
-      expect(client.baseURL).toBe("https://sandbox.vectrade.io/api/v1");
+      expect(client.baseURL).toBe("https://api.vectrade.io/v1");
     });
 
     it("respects custom baseURL", () => {

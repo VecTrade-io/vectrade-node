@@ -5,9 +5,12 @@
  * to convert them to idiomatic camelCase for TypeScript consumers (§6.3).
  */
 
-/** Convert a snake_case string to camelCase. */
+/** Convert a snake_case string to camelCase, preserving leading underscores. */
 export function snakeToCamel(s: string): string {
-  return s.replace(/_([a-z0-9])/g, (_, c: string) => c.toUpperCase());
+  const match = s.match(/^(_*)(.*)/);
+  const prefix = match?.[1] ?? "";
+  const rest = match?.[2] ?? s;
+  return prefix + rest.replace(/_([a-z0-9])/g, (_, c: string) => c.toUpperCase());
 }
 
 /** Recursively convert all keys in an object from snake_case to camelCase. */

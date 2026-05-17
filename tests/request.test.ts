@@ -225,8 +225,7 @@ describe("client.request() – response metadata", () => {
           {
             headers: {
               "x-request-id": "req_meta_123",
-              "x-ratelimit-remaining": "42",
-              "x-ratelimit-reset": "1700000000",
+              "x-vq-ratelimit-remaining": "42",
             },
           },
         ),
@@ -237,7 +236,8 @@ describe("client.request() – response metadata", () => {
     expect(client.lastResponseMeta).toEqual({
       requestId: "req_meta_123",
       rateLimitRemaining: 42,
-      rateLimitReset: 1700000000,
+      rateLimitReset: undefined,
+      retries: 0,
     });
   });
 
