@@ -109,6 +109,15 @@ console.log(event.type); // "quote.alert.triggered"
 | Bun | ≥ 1.0 |
 | Cloudflare Workers | ✓ |
 
+## Documentation
+
+Full documentation is available at [docs.vectrade.io/sdks/typescript](https://docs.vectrade.io/sdks/typescript).
+
+- [API Reference](https://docs.vectrade.io/api-reference/overview)
+- [Authentication Guide](https://docs.vectrade.io/guides/authentication)
+- [Error Handling](https://docs.vectrade.io/guides/error-handling)
+- [Streaming Guide](https://docs.vectrade.io/guides/streaming)
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
