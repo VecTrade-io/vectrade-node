@@ -216,6 +216,11 @@ export class VecTrade {
           retries: attempt,
         };
 
+        // 204 No Content — nothing to parse
+        if (response.status === 204) {
+          return undefined as T;
+        }
+
         return (await response.json()) as T;
       } catch (error) {
         if (error instanceof APIError) {
