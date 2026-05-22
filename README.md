@@ -24,6 +24,60 @@ npm install @vectrade/sdk
 pnpm add @vectrade/sdk
 ```
 
+## Authentication
+
+All API requests require a valid API key passed via the `X-API-Key` header. The SDK handles this automatically.
+
+### Getting Your API Key
+
+1. Sign up at [vectrade.io/register](https://vectrade.io/register) (free tier includes 10,000 requests/month)
+2. Navigate to [Developer Dashboard](https://vectrade.io/vtrade/developer) to view/create keys
+3. Keys follow the format `vq_<random>` (e.g., `vq_xS42eF9Pa9ZOD3MRwuszYf5tTmdrEP7...`)
+
+### Configuring the SDK
+
+```typescript
+import { VecTrade } from "@vectrade/sdk";
+
+// Option 1: Environment variable (recommended)
+// Set VECTRADE_API_KEY=vq_live_...
+const vt = new VecTrade(); // auto-reads VECTRADE_API_KEY
+
+// Option 2: Explicit parameter
+const vt2 = new VecTrade({ apiKey: "vq_live_..." });
+```
+
+> **Security:** Never hardcode API keys in source code. Use environment variables or a secrets manager.
+
+### Plan Limits & Enforcement
+
+Each API key is bound to a subscription plan with the following enforced limits:
+
+| Limit | Free | Standard | Professional |
+|-------|------|----------|--------------|
+| API calls/month | 10,000 | 100,000 | 500,000 |
+| Requests/minute (RPM) | 20 | 120 | 300 |
+| Requests/second (RPS) | 2 | 10 | 25 |
+| Monthly tokens | — | 1,000,000 | 5,000,000 |
+| AI prompts/day | 5 | Unlimited | Unlimited |
+| API keys | 1 | 5 | 20 |
+| Key scopes | ✓ | ✓ | ✓ |
+
+When a limit is exceeded, the API returns a `429` status with a descriptive error body.
+
+### Error Responses for Auth Issues
+
+| Scenario | HTTP Status | SDK Exception |
+|----------|------------|---------------|
+| Missing API key | 401 | `AuthenticationError` |
+| Invalid/expired/revoked key | 403 | `AuthenticationError` |
+| Monthly quota exceeded | 429 | `QuotaExceededError` |
+| Token quota exceeded | 429 | `QuotaExceededError` |
+| RPM/RPS rate limit exceeded | 429 | `RateLimitError` |
+| AI access denied (plan) | 403 | `PaymentRequiredError` |
+| AI daily limit exceeded | 429 | `QuotaExceededError` |
+| Scope denied (key restriction) | 403 | `AuthenticationError` |
+
 ## Quick Start
 
 ```typescript
@@ -74,22 +128,61 @@ const vt = new VecTrade({
 The SDK throws typed errors for all API failures:
 
 ```typescript
-import { VecTrade, RateLimitError, NotFoundError, AuthenticationError } from "@vectrade/sdk";
+import {
+  VecTrade,
+  RateLimitError,
+  NotFoundError,
+  AuthenticationError,
+  QuotaExceededError,
+  PaymentRequiredError,
+} from "@vectrade/sdk";
 
 try {
   const quote = await vt.quotes.get("INVALID");
 } catch (e) {
-  if (e instanceof NotFoundError) {
-    console.log(`Symbol not found (${e.status}): ${e.message}`);
+  if (e instanceof AuthenticationError) {
+    // 401/403: invalid key, expired, revoked, or scope denied
+    console.error(`Auth failed: ${e.message}`);
+  } else if (e instanceof PaymentRequiredError) {
+    // 403: AI features not included in plan
+    console.error(`Upgrade required: ${e.message}`);
+  } else if (e instanceof QuotaExceededError) {
+    // 429: monthly quota, token quota, or AI daily limit exhausted
+    console.error(`Quota exhausted: ${e.message} (policy: ${e.overagePolicy})`);
   } else if (e instanceof RateLimitError) {
-    console.log(`Rate limited. Retry after ${e.retryAfter}s`);
-  } else if (e instanceof AuthenticationError) {
-    console.log(`Invalid API key: ${e.message}`);
+    // 429: RPM or RPS rate limit exceeded
+    console.error(`Rate limited. Retry after ${e.retryAfter}s`);
+  } else if (e instanceof NotFoundError) {
+    // 404: resource not found
+    console.error(`Not found: ${e.message}`);
   }
 }
 ```
 
-All errors include `requestId` and `status` for debugging.
+All errors include `requestId`, `status`, and `errorCode` for debugging.
+
+## Developer Self-Service
+
+Manage your API keys and monitor usage programmatically:
+
+```typescript
+// Check your plan and quota
+const plan = await vt.developer.getPlan();
+console.log(`Plan: ${plan.plan_name}, Quota: ${plan.monthly_quota}`);
+console.log(`AI: ${plan.includes_ai}, Tokens: ${plan.monthly_tokens}`);
+
+const quota = await vt.developer.getQuota();
+console.log(`Used: ${quota.used}/${quota.monthly_quota} (${quota.usage_pct}%)`);
+
+// Check usage with token tracking
+const usage = await vt.developer.getUsage();
+console.log(`Tokens: ${usage.tokens_used}/${usage.token_quota}`);
+
+// Manage API keys
+const keys = await vt.developer.listKeys();
+const newKey = await vt.developer.createKey({ label: "production", scopes: ["quotes", "options"] });
+await vt.developer.revokeKey(newKey.id);
+```
 
 ## Webhooks
 

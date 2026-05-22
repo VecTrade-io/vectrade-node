@@ -28,16 +28,19 @@ jobs:
       - run: npm run typecheck
       - run: npm run build
       - run: npm test
+
       - name: Coverage
-        if: matrix.node-version == 20
+        if: matrix.node-version == 22
         run: npx vitest run --coverage
+
       - name: Upload coverage
-        if: matrix.node-version == 20
+        if: matrix.node-version == 22
         uses: codecov/codecov-action@v4
         with:
           files: coverage/lcov.info
           fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
+
       - name: Verify package
-        if: matrix.node-version == 20
+        if: matrix.node-version == 22
         run: npm pack --dry-run

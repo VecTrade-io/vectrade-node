@@ -1,0 +1,28 @@
+name: Live Integration Tests
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 8 * * 1" # Every Monday at 08:00 UTC
+
+permissions:
+  contents: read
+
+jobs:
+  live-tests:
+    runs-on: ubuntu-latest
+    environment: live-tests
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Run live integration tests
+        env:
+          VECTRADE_API_KEY: ${{ secrets.VECTRADE_API_KEY }}
+        run: npx vitest run tests/live.test.ts --reporter=verbose

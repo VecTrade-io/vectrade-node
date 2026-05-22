@@ -239,23 +239,17 @@ const MOCK_QUOTA = {
 // --- MSW server ---
 const server = setupServer(
   // Analyst
-  http.get(`${BASE}/vq/analyst/:symbol/consensus`, () =>
-    HttpResponse.json(MOCK_CONSENSUS)
-  ),
+  http.get(`${BASE}/vq/analyst/:symbol/consensus`, () => HttpResponse.json(MOCK_CONSENSUS)),
   http.get(`${BASE}/vq/analyst/:symbol/price-targets`, () =>
     HttpResponse.json({ data: [MOCK_PRICE_TARGET] })
   ),
-  http.get(`${BASE}/vq/analyst/:symbol/ratings`, () =>
-    HttpResponse.json({ data: [MOCK_RATING] })
-  ),
+  http.get(`${BASE}/vq/analyst/:symbol/ratings`, () => HttpResponse.json({ data: [MOCK_RATING] })),
 
   // Earnings
   http.get(`${BASE}/vq/earnings/:symbol/history`, () =>
     HttpResponse.json({ data: [MOCK_EARNINGS] })
   ),
-  http.get(`${BASE}/vq/earnings/calendar`, () =>
-    HttpResponse.json({ data: [MOCK_CALENDAR] })
-  ),
+  http.get(`${BASE}/vq/earnings/calendar`, () => HttpResponse.json({ data: [MOCK_CALENDAR] })),
 
   // Fundamentals
   http.get(`${BASE}/vq/fundamentals/:symbol/income`, () =>
@@ -264,17 +258,13 @@ const server = setupServer(
   http.get(`${BASE}/vq/fundamentals/:symbol/balance-sheet`, () =>
     HttpResponse.json({ data: [MOCK_BALANCE] })
   ),
-  http.get(`${BASE}/vq/fundamentals/:symbol`, () =>
-    HttpResponse.json(MOCK_FUNDAMENTAL)
-  ),
+  http.get(`${BASE}/vq/fundamentals/:symbol`, () => HttpResponse.json(MOCK_FUNDAMENTAL)),
 
   // Insider
   http.get(`${BASE}/vq/insider/:symbol/transactions`, () =>
     HttpResponse.json({ data: [MOCK_INSIDER_TX] })
   ),
-  http.get(`${BASE}/vq/insider/:symbol/summary`, () =>
-    HttpResponse.json(MOCK_INSIDER_SUMMARY)
-  ),
+  http.get(`${BASE}/vq/insider/:symbol/summary`, () => HttpResponse.json(MOCK_INSIDER_SUMMARY)),
 
   // News
   http.get(`${BASE}/vq/news/:id`, ({ params }) => {
@@ -305,24 +295,14 @@ const server = setupServer(
   ),
 
   // Technicals
-  http.get(`${BASE}/vq/technicals/:symbol`, () =>
-    HttpResponse.json(MOCK_TECHNICAL)
-  ),
+  http.get(`${BASE}/vq/technicals/:symbol`, () => HttpResponse.json(MOCK_TECHNICAL)),
 
   // Developer
   http.get(`${BASE}/vq/developer/keys`, () => HttpResponse.json(MOCK_KEYS)),
-  http.post(`${BASE}/vq/developer/keys`, () =>
-    HttpResponse.json(MOCK_KEY_CREATED)
-  ),
-  http.delete(`${BASE}/vq/developer/keys/:keyId`, () =>
-    HttpResponse.json({}, { status: 200 })
-  ),
-  http.get(`${BASE}/vq/developer/usage/daily`, () =>
-    HttpResponse.json(MOCK_DAILY_USAGE)
-  ),
-  http.get(`${BASE}/vq/developer/usage`, () =>
-    HttpResponse.json(MOCK_USAGE)
-  ),
+  http.post(`${BASE}/vq/developer/keys`, () => HttpResponse.json(MOCK_KEY_CREATED)),
+  http.delete(`${BASE}/vq/developer/keys/:keyId`, () => HttpResponse.json({}, { status: 200 })),
+  http.get(`${BASE}/vq/developer/usage/daily`, () => HttpResponse.json(MOCK_DAILY_USAGE)),
+  http.get(`${BASE}/vq/developer/usage`, () => HttpResponse.json(MOCK_USAGE)),
   http.get(`${BASE}/vq/developer/plan`, () => HttpResponse.json(MOCK_PLAN)),
   http.get(`${BASE}/vq/developer/quota`, () => HttpResponse.json(MOCK_QUOTA)),
 
@@ -331,9 +311,7 @@ const server = setupServer(
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       start(controller) {
-        controller.enqueue(
-          encoder.encode('data: {"text":"Analysis","type":"text"}\n\n')
-        );
+        controller.enqueue(encoder.encode('data: {"text":"Analysis","type":"text"}\n\n'));
         controller.enqueue(encoder.encode("data: [DONE]\n\n"));
         controller.close();
       },

@@ -57,54 +57,78 @@ export class Developer {
   }
 }
 
-// Response types aligned with finance core VQ schemas
+// Response types aligned with auth gateway VQ schemas
 
 export interface ApiKeyResponse {
   id: string;
-  keyPrefix: string;
+  key_prefix: string;
   label: string;
-  scopes: string[];
-  createdAt: string;
+  scopes: string;
+  status: string;
+  rate_limit_rpm: number | null;
+  last_used_at: string | null;
+  expires_at: string | null;
+  created_at: string;
 }
 
-export interface ApiKeyCreated extends ApiKeyResponse {
-  rawKey: string;
+export interface ApiKeyCreated {
+  id: string;
+  raw_key: string;
+  key_prefix: string;
+  label: string;
+  scopes: string;
+  created_at: string;
 }
 
 export interface UsageResponse {
   period: string;
-  totalRequests: number;
-  aiRequests: number;
-  errorCount: number;
-  tokensUsed: number;
-  quotaLimit: number;
-  quotaRemaining: number;
+  total_requests: number;
+  ai_requests: number;
+  error_count: number;
+  tokens_used: number;
+  token_quota: number;
+  token_remaining: number;
+  quota_limit: number;
+  quota_remaining: number;
+  overage_calls: number;
+  metering_type: string;
 }
 
 export interface DailyUsageResponse {
   day: string;
   endpoint: string;
   method: string;
-  callCount: number;
-  errorCount: number;
-  tokensUsed: number;
+  call_count: number;
+  error_count: number;
+  total_latency_ms: number;
+  tokens_used: number;
 }
 
 export interface PlanResponse {
-  id: string;
-  planId: string;
-  planName: string;
+  plan_id: string;
+  plan_name: string;
   status: string;
-  currentPeriodStart: string;
-  currentPeriodEnd: string;
-  createdAt: string;
+  monthly_quota: number;
+  rate_limit_rpm: number;
+  rate_limit_rps: number;
+  max_keys: number;
+  includes_ai: boolean;
+  monthly_tokens: number;
+  ai_prompts_per_day: number;
+  metering_type: string;
+  overage_policy: string;
+  overage_cap_multiplier: number;
+  monthly_price_usd: number;
+  current_period_start: string;
+  current_period_end: string;
 }
 
 export interface QuotaResponse {
-  planId: string;
-  monthlyQuota: number;
+  plan_id: string;
+  monthly_quota: number;
   used: number;
   remaining: number;
-  overagePolicy: string;
-  resetAt: string;
+  usage_pct: number;
+  overage_policy: string;
+  reset_at: string;
 }

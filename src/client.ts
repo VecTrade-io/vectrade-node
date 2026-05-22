@@ -154,7 +154,7 @@ export class VecTrade {
     }
 
     const headers = new Headers(options?.headers);
-    headers.set("Authorization", `Bearer ${this.apiKey}`);
+    headers.set("X-API-Key", this.apiKey);
     headers.set("Content-Type", "application/json");
     headers.set("User-Agent", `vectrade-node/${SDK_VERSION}`);
 
@@ -262,34 +262,49 @@ export class VecTrade {
     const rawBody = await response.text().catch(() => "");
     const requestId = response.headers.get("x-request-id") ?? undefined;
 
-    // Parse JSON error body — supports VecTrade core, RFC 9457, and nested envelope
+    // Parse JSON error body — supports auth gateway, VecTrade core, RFC 9457, and nested envelope
     let message = rawBody || `HTTP ${response.status}`;
     let errorCode: string | undefined;
     let details: Record<string, unknown> | undefined;
     let bodyRetryAfter: number | undefined;
     try {
       const body = JSON.parse(rawBody) as Record<string, unknown>;
+      // Auth gateway format: { error: "string_code", message: "human text", ... }
+      if (typeof body["error"] === "string" && typeof body["message"] === "string") {
+        errorCode = body["error"] as string;
+        message = body["message"] as string;
+        // Collect all extra fields as details
+        const rest = Object.fromEntries(
+          Object.entries(body).filter(([k]) => k !== "error" && k !== "message")
+        );
+        if (Object.keys(rest).length > 0) {
+          details = rest as Record<string, unknown>;
+        }
+        if (typeof body["retry_after_seconds"] === "number") {
+          bodyRetryAfter = body["retry_after_seconds"] as number;
+        }
+      }
       // VecTrade core format: { error_code, message, details, retry_after }
-      if (typeof body["error_code"] === "string") {
-        errorCode = body["error_code"];
-        if (typeof body["message"] === "string") message = body["message"];
+      else if (typeof body["error_code"] === "string") {
+        errorCode = body["error_code"] as string;
+        if (typeof body["message"] === "string") message = body["message"] as string;
         if (body["details"] && typeof body["details"] === "object") {
           details = body["details"] as Record<string, unknown>;
         }
         if (typeof body["retry_after"] === "number") {
-          bodyRetryAfter = body["retry_after"];
+          bodyRetryAfter = body["retry_after"] as number;
         }
       }
       // RFC 9457: { detail, type, title }
       else if (typeof body["detail"] === "string") {
-        message = body["detail"];
-        errorCode = typeof body["type"] === "string" ? body["type"] : undefined;
+        message = body["detail"] as string;
+        errorCode = typeof body["type"] === "string" ? (body["type"] as string) : undefined;
       }
       // Nested envelope: { error: { message, type } }
       else if (body["error"] && typeof body["error"] === "object") {
         const err = body["error"] as Record<string, unknown>;
-        if (typeof err["message"] === "string") message = err["message"];
-        errorCode = typeof err["type"] === "string" ? err["type"] : undefined;
+        if (typeof err["message"] === "string") message = err["message"] as string;
+        errorCode = typeof err["type"] === "string" ? (err["type"] as string) : undefined;
       }
     } catch {
       // Not JSON — keep rawBody as message
@@ -310,9 +325,11 @@ export class VecTrade {
     }
 
     if (response.status === 403) {
-      // 403 can be auth OR quota exceeded (BLOCK overage policy).
-      // Finance uses AUTH_002 for both — detect quota by message content.
-      if (message.toLowerCase().includes("quota")) {
+      // Distinguish auth errors from quota/plan-gated errors using error code
+      if (errorCode === "ai_access_denied") {
+        throw new PaymentRequiredError(message, baseOpts);
+      }
+      if (errorCode === "quota_exceeded" || message.toLowerCase().includes("quota")) {
         throw new QuotaExceededError(message, {
           ...baseOpts,
           quotaLimit,
@@ -335,13 +352,18 @@ export class VecTrade {
       const retryAfter = response.headers.get("retry-after");
       const effectiveRetryAfter = retryAfter ? Number.parseFloat(retryAfter) : bodyRetryAfter;
 
-      // Distinguish rate limit from quota exceeded (THROTTLE policy)
-      if (message.toLowerCase().includes("quota")) {
+      // Distinguish rate limit from quota exceeded
+      if (
+        errorCode === "quota_exceeded" ||
+        errorCode === "token_quota_exceeded" ||
+        errorCode === "ai_daily_limit_exceeded" ||
+        message.toLowerCase().includes("quota")
+      ) {
         throw new QuotaExceededError(message, {
           ...baseOpts,
           quotaLimit,
           quotaRemaining: 0,
-          overagePolicy: "THROTTLE",
+          overagePolicy: errorCode === "token_quota_exceeded" ? "TOKEN" : "THROTTLE",
         });
       }
       throw new RateLimitError(message, {
@@ -371,7 +393,7 @@ export class VecTrade {
     try {
       const response = await fetch(`${base}/health`, {
         headers: {
-          Authorization: `Bearer ${this.apiKey}`,
+          "X-API-Key": this.apiKey,
           "User-Agent": `vectrade-node/${SDK_VERSION}`,
         },
         signal: controller.signal,

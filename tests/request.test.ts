@@ -9,6 +9,8 @@ import {
   RateLimitError,
   ServerError,
   APIError,
+  QuotaExceededError,
+  PaymentRequiredError,
 } from "../src/errors";
 
 const BASE = "https://api.vectrade.io/v1";
@@ -249,16 +251,207 @@ describe("client.request() – successful request", () => {
     expect(data.price).toBe(195);
   });
 
-  it("sends Authorization header", async () => {
-    let authHeader: string | null = null;
+  it("sends X-API-Key header", async () => {
+    let apiKeyHeader: string | null = null;
     server.use(
       http.get(`${BASE}/test`, ({ request }) => {
-        authHeader = request.headers.get("authorization");
+        apiKeyHeader = request.headers.get("x-api-key");
         return HttpResponse.json({ ok: true });
       })
     );
     const client = makeClient({ maxRetries: 0 });
     await client.request("GET", "/test");
-    expect(authHeader).toBe("Bearer vq_test_key12345678901");
+    expect(apiKeyHeader).toBe("vq_test_key12345678901");
+  });
+});
+
+describe("client.request() – auth gateway error format", () => {
+  it("parses auth gateway 401 format", async () => {
+    server.use(
+      http.get(`${BASE}/test`, () =>
+        HttpResponse.json(
+          {
+            error: "authentication_required",
+            message: "API key is required. Include your key in the X-API-Key header.",
+            docs_url: "https://docs.vectrade.io/guides/authentication",
+            dashboard_url: "https://vectrade.io/vtrade/developer",
+          },
+          { status: 401 }
+        )
+      )
+    );
+    const client = makeClient({ maxRetries: 0 });
+    try {
+      await client.request("GET", "/test");
+    } catch (e) {
+      expect(e).toBeInstanceOf(AuthenticationError);
+      expect((e as AuthenticationError).message).toContain("API key is required");
+      expect((e as AuthenticationError).errorCode).toBe("authentication_required");
+    }
+  });
+
+  it("parses auth gateway 403 invalid_api_key", async () => {
+    server.use(
+      http.get(`${BASE}/test`, () =>
+        HttpResponse.json(
+          {
+            error: "invalid_api_key",
+            message: "The provided API key is invalid, expired, or has been revoked.",
+            docs_url: "https://docs.vectrade.io/guides/authentication",
+            dashboard_url: "https://vectrade.io/vtrade/developer",
+          },
+          { status: 403 }
+        )
+      )
+    );
+    const client = makeClient({ maxRetries: 0 });
+    try {
+      await client.request("GET", "/test");
+    } catch (e) {
+      expect(e).toBeInstanceOf(AuthenticationError);
+      expect((e as AuthenticationError).errorCode).toBe("invalid_api_key");
+    }
+  });
+
+  it("maps 403 ai_access_denied to PaymentRequiredError", async () => {
+    server.use(
+      http.get(`${BASE}/test`, () =>
+        HttpResponse.json(
+          {
+            error: "ai_access_denied",
+            message: "AI features are not available on the Free plan.",
+            plan: "Free",
+            upgrade_url: "https://vectrade.io/vtrade/developer",
+          },
+          { status: 403 }
+        )
+      )
+    );
+    const client = makeClient({ maxRetries: 0 });
+    try {
+      await client.request("GET", "/test");
+    } catch (e) {
+      expect(e).toBeInstanceOf(PaymentRequiredError);
+      expect((e as PaymentRequiredError).errorCode).toBe("ai_access_denied");
+      expect((e as PaymentRequiredError).message).toContain("AI features");
+    }
+  });
+
+  it("maps 429 quota_exceeded to QuotaExceededError", async () => {
+    server.use(
+      http.get(`${BASE}/test`, () =>
+        HttpResponse.json(
+          {
+            error: "quota_exceeded",
+            message: "Monthly quota of 500,000 API requests exhausted.",
+            plan: "Professional",
+            used: 500001,
+            quota: 500000,
+          },
+          { status: 429, headers: { "Retry-After": "3600" } }
+        )
+      )
+    );
+    const client = makeClient({ maxRetries: 0 });
+    try {
+      await client.request("GET", "/test");
+    } catch (e) {
+      expect(e).toBeInstanceOf(QuotaExceededError);
+      expect((e as QuotaExceededError).errorCode).toBe("quota_exceeded");
+    }
+  });
+
+  it("maps 429 token_quota_exceeded to QuotaExceededError", async () => {
+    server.use(
+      http.get(`${BASE}/test`, () =>
+        HttpResponse.json(
+          {
+            error: "token_quota_exceeded",
+            message: "Monthly token quota of 5,000,000 tokens exhausted.",
+            tokens_used: 10000001,
+            token_quota: 5000000,
+          },
+          { status: 429, headers: { "Retry-After": "3600" } }
+        )
+      )
+    );
+    const client = makeClient({ maxRetries: 0 });
+    try {
+      await client.request("GET", "/test");
+    } catch (e) {
+      expect(e).toBeInstanceOf(QuotaExceededError);
+      expect((e as QuotaExceededError).overagePolicy).toBe("TOKEN");
+    }
+  });
+
+  it("maps 429 ai_daily_limit_exceeded to QuotaExceededError", async () => {
+    server.use(
+      http.get(`${BASE}/test`, () =>
+        HttpResponse.json(
+          {
+            error: "ai_daily_limit_exceeded",
+            message: "Daily AI prompt limit of 5 reached.",
+            prompts_used_today: 5,
+            daily_limit: 5,
+          },
+          { status: 429, headers: { "Retry-After": "3600" } }
+        )
+      )
+    );
+    const client = makeClient({ maxRetries: 0 });
+    try {
+      await client.request("GET", "/test");
+    } catch (e) {
+      expect(e).toBeInstanceOf(QuotaExceededError);
+      expect((e as QuotaExceededError).errorCode).toBe("ai_daily_limit_exceeded");
+    }
+  });
+
+  it("maps 429 rate_limit_exceeded to RateLimitError", async () => {
+    server.use(
+      http.get(`${BASE}/test`, () =>
+        HttpResponse.json(
+          {
+            error: "rate_limit_exceeded",
+            message: "Burst rate limit of 25 requests/second exceeded.",
+            plan: "Professional",
+            limit_rps: 25,
+            retry_after_seconds: 1,
+          },
+          { status: 429, headers: { "Retry-After": "1" } }
+        )
+      )
+    );
+    const client = makeClient({ maxRetries: 0 });
+    try {
+      await client.request("GET", "/test");
+    } catch (e) {
+      expect(e).toBeInstanceOf(RateLimitError);
+      expect((e as RateLimitError).retryAfter).toBe(1);
+      expect((e as RateLimitError).errorCode).toBe("rate_limit_exceeded");
+    }
+  });
+
+  it("maps 403 scope_denied to AuthenticationError", async () => {
+    server.use(
+      http.get(`${BASE}/test`, () =>
+        HttpResponse.json(
+          {
+            error: "scope_denied",
+            message: "This API key does not have permission for the requested resource.",
+            allowed_scopes: "quotes",
+            requested_path: "/v1/vq/options/AAPL/chain",
+          },
+          { status: 403 }
+        )
+      )
+    );
+    const client = makeClient({ maxRetries: 0 });
+    try {
+      await client.request("GET", "/test");
+    } catch (e) {
+      expect(e).toBeInstanceOf(AuthenticationError);
+      expect((e as AuthenticationError).errorCode).toBe("scope_denied");
+    }
   });
 });
