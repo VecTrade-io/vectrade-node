@@ -8,6 +8,7 @@ import {
   ValidationError,
   RateLimitError,
   ServerError,
+  ServiceUnavailableError,
   APIError,
   QuotaExceededError,
   PaymentRequiredError,
@@ -452,6 +453,307 @@ describe("client.request() – auth gateway error format", () => {
     } catch (e) {
       expect(e).toBeInstanceOf(AuthenticationError);
       expect((e as AuthenticationError).errorCode).toBe("scope_denied");
+    }
+  });
+});
+
+describe("client.request() – VecTrade core error format", () => {
+  it("parses core 401 AUTH_001 format", async () => {
+    server.use(
+      http.get(`${BASE}/test`, () =>
+        HttpResponse.json(
+          {
+            error_code: "AUTH_001",
+            message: "Invalid or expired credentials",
+            details: null,
+            request_id: "req_fin_001",
+          },
+          { status: 401, headers: { "x-request-id": "req_fin_001" } }
+        )
+      )
+    );
+    const client = makeClient({ maxRetries: 0 });
+    try {
+      await client.request("GET", "/test");
+    } catch (e) {
+      expect(e).toBeInstanceOf(AuthenticationError);
+      const err = e as AuthenticationError;
+      expect(err.errorCode).toBe("AUTH_001");
+      expect(err.message).toContain("Invalid or expired");
+      expect(err.requestId).toBe("req_fin_001");
+    }
+  });
+
+  it("parses core 402 PAY_001 as PaymentRequiredError", async () => {
+    server.use(
+      http.get(`${BASE}/test`, () =>
+        HttpResponse.json(
+          {
+            error_code: "PAY_001",
+            message: "Payment required",
+            details: null,
+          },
+          { status: 402 }
+        )
+      )
+    );
+    const client = makeClient({ maxRetries: 0 });
+    try {
+      await client.request("GET", "/test");
+    } catch (e) {
+      expect(e).toBeInstanceOf(PaymentRequiredError);
+      const err = e as PaymentRequiredError;
+      expect(err.status).toBe(402);
+      expect(err.errorCode).toBe("PAY_001");
+    }
+  });
+
+  it("parses core 403 quota exceeded (BLOCK) as QuotaExceededError", async () => {
+    server.use(
+      http.get(`${BASE}/test`, () =>
+        HttpResponse.json(
+          {
+            error_code: "AUTH_002",
+            message:
+              "Monthly quota exceeded (10000 calls). Upgrade your plan or wait for the next billing period.",
+            details: null,
+          },
+          { status: 403 }
+        )
+      )
+    );
+    const client = makeClient({ maxRetries: 0 });
+    try {
+      await client.request("GET", "/test");
+    } catch (e) {
+      expect(e).toBeInstanceOf(QuotaExceededError);
+      const err = e as QuotaExceededError;
+      expect(err.status).toBe(403);
+      expect(err.overagePolicy).toBe("BLOCK");
+    }
+  });
+
+  it("parses core 403 forbidden (not quota) as AuthenticationError", async () => {
+    server.use(
+      http.get(`${BASE}/test`, () =>
+        HttpResponse.json(
+          {
+            error_code: "AUTH_002",
+            message: "Insufficient permissions",
+            details: null,
+          },
+          { status: 403 }
+        )
+      )
+    );
+    const client = makeClient({ maxRetries: 0 });
+    try {
+      await client.request("GET", "/test");
+    } catch (e) {
+      expect(e).toBeInstanceOf(AuthenticationError);
+      expect((e as AuthenticationError).errorCode).toBe("AUTH_002");
+    }
+  });
+
+  it("parses core 404 RES_001 as NotFoundError", async () => {
+    server.use(
+      http.get(`${BASE}/test`, () =>
+        HttpResponse.json(
+          {
+            error_code: "RES_001",
+            message: "Symbol not found",
+            details: null,
+          },
+          { status: 404 }
+        )
+      )
+    );
+    const client = makeClient({ maxRetries: 0 });
+    try {
+      await client.request("GET", "/test");
+    } catch (e) {
+      expect(e).toBeInstanceOf(NotFoundError);
+      expect((e as NotFoundError).errorCode).toBe("RES_001");
+    }
+  });
+
+  it("parses core 422 VAL_001 with details", async () => {
+    server.use(
+      http.post(`${BASE}/test`, () =>
+        HttpResponse.json(
+          {
+            error_code: "VAL_001",
+            message: "Invalid filter: pe_ratio",
+            details: { field: "pe_ratio" },
+          },
+          { status: 422 }
+        )
+      )
+    );
+    const client = makeClient({ maxRetries: 0 });
+    try {
+      await client.request("POST", "/test", { body: JSON.stringify({}) });
+    } catch (e) {
+      expect(e).toBeInstanceOf(ValidationError);
+      const err = e as ValidationError;
+      expect(err.errorCode).toBe("VAL_001");
+      expect(err.details).toEqual({ field: "pe_ratio" });
+    }
+  });
+
+  it("parses core 429 RL_001 as RateLimitError", async () => {
+    server.use(
+      http.get(`${BASE}/test`, () =>
+        HttpResponse.json(
+          {
+            error_code: "RL_001",
+            message: "Rate limit exceeded. Retry after 3 seconds.",
+            details: { retry_after: 2.5 },
+          },
+          { status: 429, headers: { "Retry-After": "3" } }
+        )
+      )
+    );
+    const client = makeClient({ maxRetries: 0 });
+    try {
+      await client.request("GET", "/test");
+    } catch (e) {
+      expect(e).toBeInstanceOf(RateLimitError);
+      const err = e as RateLimitError;
+      expect(err.errorCode).toBe("RL_001");
+      expect(err.retryAfter).toBe(3);
+    }
+  });
+
+  it("parses core 429 quota throttle as QuotaExceededError", async () => {
+    server.use(
+      http.get(`${BASE}/test`, () =>
+        HttpResponse.json(
+          {
+            error_code: "RL_001",
+            message: "Monthly quota exceeded, requests throttled.",
+            details: null,
+          },
+          { status: 429 }
+        )
+      )
+    );
+    const client = makeClient({ maxRetries: 0 });
+    try {
+      await client.request("GET", "/test");
+    } catch (e) {
+      expect(e).toBeInstanceOf(QuotaExceededError);
+      expect((e as QuotaExceededError).overagePolicy).toBe("THROTTLE");
+    }
+  });
+
+  it("parses core retry_after from body when header absent", async () => {
+    server.use(
+      http.get(`${BASE}/test`, () =>
+        HttpResponse.json(
+          {
+            error_code: "RL_001",
+            message: "Rate limit exceeded",
+            retry_after: 5.0,
+          },
+          { status: 429 }
+        )
+      )
+    );
+    const client = makeClient({ maxRetries: 0 });
+    try {
+      await client.request("GET", "/test");
+    } catch (e) {
+      expect(e).toBeInstanceOf(RateLimitError);
+      expect((e as RateLimitError).retryAfter).toBe(5.0);
+    }
+  });
+
+  it("parses core 502 SYS_002 as ServiceUnavailableError", async () => {
+    server.use(
+      http.get(`${BASE}/test`, () =>
+        HttpResponse.json(
+          {
+            error_code: "SYS_002",
+            message: "Upstream service error",
+          },
+          { status: 502 }
+        )
+      )
+    );
+    const client = makeClient({ maxRetries: 0 });
+    try {
+      await client.request("GET", "/test");
+    } catch (e) {
+      expect(e).toBeInstanceOf(ServiceUnavailableError);
+      expect((e as ServiceUnavailableError).errorCode).toBe("SYS_002");
+    }
+  });
+
+  it("parses core 503 SYS_003 as ServiceUnavailableError", async () => {
+    server.use(
+      http.get(`${BASE}/test`, () =>
+        HttpResponse.json(
+          {
+            error_code: "SYS_003",
+            message: "Service temporarily unavailable",
+          },
+          { status: 503 }
+        )
+      )
+    );
+    const client = makeClient({ maxRetries: 0 });
+    try {
+      await client.request("GET", "/test");
+    } catch (e) {
+      expect(e).toBeInstanceOf(ServiceUnavailableError);
+      expect((e as ServiceUnavailableError).errorCode).toBe("SYS_003");
+    }
+  });
+
+  it("parses core 500 SYS_001 as ServerError", async () => {
+    server.use(
+      http.get(`${BASE}/test`, () =>
+        HttpResponse.json(
+          {
+            error_code: "SYS_001",
+            message: "Internal server error",
+          },
+          { status: 500 }
+        )
+      )
+    );
+    const client = makeClient({ maxRetries: 0 });
+    try {
+      await client.request("GET", "/test");
+    } catch (e) {
+      expect(e).toBeInstanceOf(ServerError);
+      expect((e as ServerError).errorCode).toBe("SYS_001");
+    }
+  });
+
+  it("preserves error_code and details on all exceptions", async () => {
+    server.use(
+      http.get(`${BASE}/test`, () =>
+        HttpResponse.json(
+          {
+            error_code: "RES_001",
+            message: "Not found",
+            details: { docs_url: "https://docs.vectrade.io/errors#not-found" },
+          },
+          { status: 404, headers: { "x-request-id": "req_preserve" } }
+        )
+      )
+    );
+    const client = makeClient({ maxRetries: 0 });
+    try {
+      await client.request("GET", "/test");
+    } catch (e) {
+      expect(e).toBeInstanceOf(NotFoundError);
+      const err = e as NotFoundError;
+      expect(err.errorCode).toBe("RES_001");
+      expect(err.requestId).toBe("req_preserve");
+      expect(err.details).toEqual({ docs_url: "https://docs.vectrade.io/errors#not-found" });
     }
   });
 });

@@ -7,12 +7,7 @@
  * Run manually: VECTRADE_API_KEY=vq_... npx vitest run tests/live.test.ts
  */
 import { describe, it, expect, beforeAll } from "vitest";
-import {
-  VecTrade,
-  AuthenticationError,
-  ConfigurationError,
-  NotFoundError,
-} from "../src/index";
+import { VecTrade, AuthenticationError, ConfigurationError, NotFoundError } from "../src/index";
 
 const API_KEY = process.env.VECTRADE_API_KEY;
 

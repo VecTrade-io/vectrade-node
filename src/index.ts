@@ -5,6 +5,10 @@ export type { VecTradeOptions, RequestOptions, ResponseMeta } from "./client";
 // Version
 export { SDK_VERSION } from "./version";
 
+// Tier config
+export { DEFAULT_TIERS, getDefaultTier } from "./tier-config";
+export type { PlanDefaults } from "./tier-config";
+
 // Errors
 export {
   VecTradeError,
