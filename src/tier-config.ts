@@ -29,7 +29,7 @@ export const DEFAULT_TIERS: Record<string, PlanDefaults> = {
     max_keys: 1,
     includes_ai: false,
     monthly_tokens: 0,
-    ai_prompts_per_day: 5,
+    ai_prompts_per_day: 0,
     metering_type: "request",
     overage_policy: "BLOCK",
     overage_cap_multiplier: 1.0,
