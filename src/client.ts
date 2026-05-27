@@ -2,14 +2,14 @@ import { Quotes } from "./resources/quotes";
 import { Fundamentals } from "./resources/fundamentals";
 import { Technicals } from "./resources/technicals";
 import { News } from "./resources/news";
-import { Screener } from "./resources/screener";
-import { AI } from "./resources/ai";
 import { Options } from "./resources/options";
 import { Analyst } from "./resources/analyst";
 import { Earnings } from "./resources/earnings";
 import { Insider } from "./resources/insider";
-import { WebhooksResource } from "./resources/webhooks";
-import { Developer } from "./resources/developer";
+import { Profile } from "./resources/profile";
+import { Sentiment } from "./resources/sentiment";
+import { Historical } from "./resources/historical";
+import { ETF } from "./resources/etf";
 import {
   ConfigurationError,
   VecTradeError,
@@ -82,10 +82,6 @@ export class VecTrade {
   readonly technicals: Technicals;
   /** News API resource. */
   readonly news: News;
-  /** Screener API resource. */
-  readonly screener: Screener;
-  /** AI analysis resource. */
-  readonly ai: AI;
   /** Options API resource. */
   readonly options: Options;
   /** Analyst ratings resource. */
@@ -94,10 +90,14 @@ export class VecTrade {
   readonly earnings: Earnings;
   /** Insider trading resource. */
   readonly insider: Insider;
-  /** Webhooks management resource. */
-  readonly webhooks: WebhooksResource;
-  /** Developer self-service resource (keys, usage, quota). */
-  readonly developer: Developer;
+  /** Company profile resource. */
+  readonly profile: Profile;
+  /** Sentiment analysis resource. */
+  readonly sentiment: Sentiment;
+  /** Historical price data resource. */
+  readonly historical: Historical;
+  /** ETF data resource. */
+  readonly etf: ETF;
 
   constructor(options: VecTradeOptions = {}) {
     const apiKey =
@@ -132,14 +132,14 @@ export class VecTrade {
     this.fundamentals = new Fundamentals(this);
     this.technicals = new Technicals(this);
     this.news = new News(this);
-    this.screener = new Screener(this);
-    this.ai = new AI(this);
     this.options = new Options(this);
     this.analyst = new Analyst(this);
     this.earnings = new Earnings(this);
     this.insider = new Insider(this);
-    this.webhooks = new WebhooksResource(this);
-    this.developer = new Developer(this);
+    this.profile = new Profile(this);
+    this.sentiment = new Sentiment(this);
+    this.historical = new Historical(this);
+    this.etf = new ETF(this);
   }
 
   /** Make an authenticated request to the VecTrade API. */

@@ -24,13 +24,15 @@ export class Quotes {
   /** Get quotes for multiple symbols in a single request. */
   async batch(symbols: string[]): Promise<QuoteResponse[]> {
     validateSymbols(symbols);
-    const response = await this.client.request<{ data: QuoteResponse[] }>(
+    const response = await this.client.request<{ data: Record<string, QuoteResponse> | QuoteResponse[] }>(
       "GET",
       "/vq/quotes/batch",
       {
         params: { symbols: symbols.join(",") },
       }
     );
-    return response.data;
+    const data = response.data;
+    if (Array.isArray(data)) return data;
+    return Object.values(data);
   }
 }

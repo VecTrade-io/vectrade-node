@@ -34,14 +34,12 @@ export class Insider {
   /** Get recent insider transactions for a symbol. */
   async transactions(symbol: string, options?: { limit?: number }): Promise<InsiderTransaction[]> {
     validateSymbol(symbol);
-    const params: Record<string, string> = {};
-    if (options?.limit) params.limit = String(options.limit);
-    const response = await this.client.request<{ data: InsiderTransaction[] }>(
+    const response = await this.client.request<{ trades: InsiderTransaction[] }>(
       "GET",
-      `/vq/insider/${encodeURIComponent(symbol)}/transactions`,
-      { params }
+      `/vq/insider/${encodeURIComponent(symbol)}`
     );
-    return response.data;
+    const limit = options?.limit ?? 20;
+    return response.trades.slice(0, limit);
   }
 
   /** Get insider trading summary for a symbol. */
@@ -49,7 +47,7 @@ export class Insider {
     validateSymbol(symbol);
     return this.client.request<InsiderSummary>(
       "GET",
-      `/vq/insider/${encodeURIComponent(symbol)}/summary`
+      `/vq/insider/${encodeURIComponent(symbol)}`
     );
   }
 }

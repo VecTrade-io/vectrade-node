@@ -20,25 +20,20 @@ export class News {
     this.client = client;
   }
 
-  /** Get latest financial news. */
-  async list(options?: {
+  /** Get latest financial news for a symbol. */
+  async list(symbolOrOptions?: string | {
     symbols?: string[];
     category?: string;
     limit?: number;
   }): Promise<NewsArticle[]> {
-    const params: Record<string, string> = {
-      limit: String(options?.limit ?? 20),
-    };
-    if (options?.symbols) {
-      params.symbols = options.symbols.join(",");
+    // If string passed directly, use the symbol-specific endpoint
+    const symbol = typeof symbolOrOptions === "string" ? symbolOrOptions : symbolOrOptions?.symbols?.[0];
+    if (!symbol) {
+      throw new Error("A symbol is required. Pass a symbol string or options.symbols.");
     }
-    if (options?.category) {
-      params.category = options.category;
-    }
-    const response = await this.client.request<{ data: NewsArticle[] }>("GET", "/vq/news", {
-      params,
-    });
-    return response.data;
+    const response = await this.client.request<{ articles: NewsArticle[] }>("GET", `/vq/news/${encodeURIComponent(symbol)}`);
+    const limit = typeof symbolOrOptions === "object" ? (symbolOrOptions?.limit ?? 20) : 20;
+    return response.articles.slice(0, limit);
   }
 
   /** Get a single news article by ID. */

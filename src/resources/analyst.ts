@@ -44,30 +44,30 @@ export class Analyst {
     validateSymbol(symbol);
     return this.client.request<AnalystConsensus>(
       "GET",
-      `/vq/analyst/${encodeURIComponent(symbol)}/consensus`
+      `/vq/analyst-consensus/${encodeURIComponent(symbol)}`
     );
   }
 
   /** Get individual analyst price targets. */
   async priceTargets(symbol: string): Promise<PriceTarget[]> {
     validateSymbol(symbol);
-    const response = await this.client.request<{ data: PriceTarget[] }>(
+    const response = await this.client.request<{ targets: PriceTarget[] }>(
       "GET",
-      `/vq/analyst/${encodeURIComponent(symbol)}/price-targets`
+      `/vq/analyst-targets/${encodeURIComponent(symbol)}`
     );
-    return response.data;
+    return response.targets;
   }
 
-  /** Get recent analyst rating changes. */
+  /** Get recent analyst rating changes (upgrades/downgrades). */
   async ratings(symbol: string, options?: { limit?: number }): Promise<AnalystRating[]> {
     validateSymbol(symbol);
     const params: Record<string, string> = {};
     if (options?.limit) params.limit = String(options.limit);
-    const response = await this.client.request<{ data: AnalystRating[] }>(
+    const response = await this.client.request<{ upgrades_downgrades: AnalystRating[] }>(
       "GET",
-      `/vq/analyst/${encodeURIComponent(symbol)}/ratings`,
+      `/vq/upgrades-downgrades/${encodeURIComponent(symbol)}`,
       { params }
     );
-    return response.data;
+    return response.upgrades_downgrades;
   }
 }

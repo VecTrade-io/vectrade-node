@@ -55,35 +55,18 @@ export class Fundamentals {
     );
   }
 
-  /** Get income statements. */
-  async incomeStatement(
+  /** Get financial statements (income, balance sheet, cash flow). */
+  async statements(
     symbol: string,
     options?: { period?: "annual" | "quarterly" }
-  ): Promise<IncomeStatement[]> {
+  ): Promise<{ income_statement: IncomeStatement[]; balance_sheet: BalanceSheet[]; cashflow_statement: unknown[] }> {
     validateSymbol(symbol);
-    const response = await this.client.request<{ data: IncomeStatement[] }>(
+    const params: Record<string, string> = {};
+    if (options?.period) params.period = options.period;
+    return this.client.request<{ income_statement: IncomeStatement[]; balance_sheet: BalanceSheet[]; cashflow_statement: unknown[] }>(
       "GET",
-      `/vq/fundamentals/${encodeURIComponent(symbol)}/income`,
-      {
-        params: { period: options?.period ?? "annual" },
-      }
+      `/vq/fundamentals/${encodeURIComponent(symbol)}/statements`,
+      { params }
     );
-    return response.data;
-  }
-
-  /** Get balance sheets. */
-  async balanceSheet(
-    symbol: string,
-    options?: { period?: "annual" | "quarterly" }
-  ): Promise<BalanceSheet[]> {
-    validateSymbol(symbol);
-    const response = await this.client.request<{ data: BalanceSheet[] }>(
-      "GET",
-      `/vq/fundamentals/${encodeURIComponent(symbol)}/balance-sheet`,
-      {
-        params: { period: options?.period ?? "annual" },
-      }
-    );
-    return response.data;
   }
 }

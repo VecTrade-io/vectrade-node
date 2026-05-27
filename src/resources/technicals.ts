@@ -48,7 +48,7 @@ export class Technicals {
     }
     return this.client.request<TechnicalResponse>(
       "GET",
-      `/vq/technicals/${encodeURIComponent(symbol)}`,
+      `/vq/technical/${encodeURIComponent(symbol)}`,
       { params }
     );
   }

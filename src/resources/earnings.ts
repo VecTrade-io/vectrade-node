@@ -36,12 +36,12 @@ export class Earnings {
     validateSymbol(symbol);
     const params: Record<string, string> = {};
     if (options?.limit) params.limit = String(options.limit);
-    const response = await this.client.request<{ data: EarningsResult[] }>(
+    const response = await this.client.request<{ history: EarningsResult[] }>(
       "GET",
-      `/vq/earnings/${encodeURIComponent(symbol)}/history`,
+      `/vq/earnings/${encodeURIComponent(symbol)}`,
       { params }
     );
-    return response.data;
+    return response.history;
   }
 
   /** Get upcoming earnings calendar. */
