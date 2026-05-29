@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-05-29
+
+### Changed
+
+- **Stable release** — all public APIs finalized, semver enforced from this point
+
+## [0.2.0] - 2026-05-29
+
 ### Added
 
 - Auth gateway error format parser (first-priority) for structured error responses
@@ -47,5 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI: GitHub Actions with Node 18/20/22 matrix
 - npm provenance publishing workflow
 
-[Unreleased]: https://github.com/VecTrade-io/vectrade-node/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/VecTrade-io/vectrade-node/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/VecTrade-io/vectrade-node/compare/v0.2.0...v1.0.0
+[0.2.0]: https://github.com/VecTrade-io/vectrade-node/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/VecTrade-io/vectrade-node/releases/tag/v0.1.0
