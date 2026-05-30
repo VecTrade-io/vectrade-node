@@ -211,6 +211,13 @@ Full documentation is available at [docs.vectrade.io/sdks/typescript](https://do
 - [Error Handling](https://docs.vectrade.io/guides/error-handling)
 - [Streaming Guide](https://docs.vectrade.io/guides/streaming)
 
+## Community
+
+- 💬 [Discord](https://discord.gg/vectrade) — Get help, share projects, discuss features
+- 🤖 [AI Provider](https://github.com/VecTrade-io/vectrade-ai-provider) — Vercel AI SDK provider for financial tool calling
+- 🧰 [MCP Server](https://github.com/VecTrade-io/vectrade-mcp) — 27 financial tools for Claude, Cursor, VS Code
+- 📦 [Examples](https://github.com/VecTrade-io/vectrade-examples/tree/main/typescript) — TypeScript quickstart, streaming, AI chatbot
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
