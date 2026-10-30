@@ -45,9 +45,6 @@ export class Insider {
   /** Get insider trading summary for a symbol. */
   async summary(symbol: string): Promise<InsiderSummary> {
     validateSymbol(symbol);
-    return this.client.request<InsiderSummary>(
-      "GET",
-      `/vq/insider/${encodeURIComponent(symbol)}`
-    );
+    return this.client.request<InsiderSummary>("GET", `/vq/insider/${encodeURIComponent(symbol)}`);
   }
 }

@@ -122,6 +122,25 @@ const vt = new VecTrade({
 | `vt.webhooks` | Webhook management for real-time alerts |
 | `vt.developer` | API key and usage management |
 | `vt.ai` | AI-powered streaming analysis |
+| `vt.profile` | Company profiles (`get(symbol)`) |
+| `vt.sentiment` | Market sentiment (`get(symbol)`) |
+| `vt.historical` | Historical quotes (`get(symbol, { period })`) |
+| `vt.etf` | ETF data (`get(symbol)`) |
+
+The screener is an auto-paginating async iterator:
+
+```typescript
+for await (const stock of vt.screener.run({
+  marketCapMin: 10_000_000_000,
+  peMax: 20,
+  sector: "Technology",
+  limit: 50,
+})) {
+  console.log(stock.symbol, stock.peRatio);
+}
+```
+
+Its maximum page size is 50. News methods return article lists and do not use cursor pagination.
 
 ## Error Handling
 

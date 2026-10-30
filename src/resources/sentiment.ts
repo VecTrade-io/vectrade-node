@@ -34,7 +34,7 @@ export class Sentiment {
     validateSymbol(symbol);
     return this.client.request<SentimentResponse>(
       "GET",
-      `/vq/sentiment/${encodeURIComponent(symbol)}`,
+      `/vq/sentiment/${encodeURIComponent(symbol)}`
     );
   }
 }

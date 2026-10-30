@@ -39,6 +39,24 @@ export interface BalanceSheet {
   totalDebt?: number;
 }
 
+export interface StatementSection {
+  ticker: string;
+  earnings: Array<Record<string, unknown>>;
+  source?: string;
+}
+
+export type StatementData = StatementSection | [];
+
+export interface FinancialStatementsResponse {
+  ticker: string;
+  income_statement: StatementData;
+  balance_sheet: StatementData;
+  cashflow_statement: StatementData;
+  market?: string;
+  source?: string;
+  timestamp?: string;
+}
+
 export class Fundamentals {
   private readonly client: VecTrade;
 
@@ -59,11 +77,11 @@ export class Fundamentals {
   async statements(
     symbol: string,
     options?: { period?: "annual" | "quarterly" }
-  ): Promise<{ income_statement: IncomeStatement[]; balance_sheet: BalanceSheet[]; cashflow_statement: unknown[] }> {
+  ): Promise<FinancialStatementsResponse> {
     validateSymbol(symbol);
     const params: Record<string, string> = {};
     if (options?.period) params.period = options.period;
-    return this.client.request<{ income_statement: IncomeStatement[]; balance_sheet: BalanceSheet[]; cashflow_statement: unknown[] }>(
+    return this.client.request<FinancialStatementsResponse>(
       "GET",
       `/vq/fundamentals/${encodeURIComponent(symbol)}/statements`,
       { params }

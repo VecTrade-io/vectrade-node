@@ -33,7 +33,7 @@ export class Historical {
     return this.client.request<HistoricalResponse>(
       "GET",
       `/vq/quotes/${encodeURIComponent(symbol)}/history`,
-      { params },
+      { params }
     );
   }
 }

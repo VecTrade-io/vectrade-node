@@ -10,6 +10,10 @@ import { Profile } from "./resources/profile";
 import { Sentiment } from "./resources/sentiment";
 import { Historical } from "./resources/historical";
 import { ETF } from "./resources/etf";
+import { AI } from "./resources/ai";
+import { Developer } from "./resources/developer";
+import { Screener } from "./resources/screener";
+import { WebhooksResource } from "./resources/webhooks";
 import {
   ConfigurationError,
   VecTradeError,
@@ -98,6 +102,14 @@ export class VecTrade {
   readonly historical: Historical;
   /** ETF data resource. */
   readonly etf: ETF;
+  /** AI analysis resource. */
+  readonly ai: AI;
+  /** Developer self-service resource. */
+  readonly developer: Developer;
+  /** Stock screening resource. */
+  readonly screener: Screener;
+  /** Webhook subscription resource. */
+  readonly webhooks: WebhooksResource;
 
   constructor(options: VecTradeOptions = {}) {
     const apiKey =
@@ -140,6 +152,10 @@ export class VecTrade {
     this.sentiment = new Sentiment(this);
     this.historical = new Historical(this);
     this.etf = new ETF(this);
+    this.ai = new AI(this);
+    this.developer = new Developer(this);
+    this.screener = new Screener(this);
+    this.webhooks = new WebhooksResource(this);
   }
 
   /** Make an authenticated request to the VecTrade API. */
@@ -221,7 +237,22 @@ export class VecTrade {
           return undefined as T;
         }
 
-        return (await response.json()) as T;
+        const payload = (await response.json()) as unknown;
+        if (
+          payload !== null &&
+          typeof payload === "object" &&
+          "status" in payload &&
+          (payload.status === "ok" || payload.status === "degraded") &&
+          "data" in payload
+        ) {
+          const metadata = Object.fromEntries(
+            Object.entries(payload).filter(([key]) => key !== "status" && key !== "data")
+          );
+          return (Object.keys(metadata).length > 0
+            ? { data: payload.data, ...metadata }
+            : payload.data) as T;
+        }
+        return payload as T;
       } catch (error) {
         if (error instanceof APIError) {
           throw error;

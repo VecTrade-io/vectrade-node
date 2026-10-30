@@ -4,6 +4,10 @@ import { setupServer } from "msw/node";
 import { VecTrade } from "../src/client";
 
 const BASE = "https://api.vectrade.io/v1";
+let requestedNewsLimit: string | null = null;
+let requestedNewsSymbols: string[] = [];
+let requestedScreenerParams: URLSearchParams | null = null;
+let requestedDeveloperScopes: unknown = null;
 
 // --- Mock data ---
 const MOCK_CONSENSUS = {
@@ -77,24 +81,30 @@ const MOCK_FUNDAMENTAL = {
 };
 
 const MOCK_INCOME = {
-  fiscalDate: "2025-09-30",
-  period: "annual",
-  revenue: 394_000_000_000,
-  grossProfit: 170_000_000_000,
-  operatingIncome: 112_000_000_000,
-  netIncome: 97_000_000_000,
-  epsBasic: 6.43,
-  epsDiluted: 6.38,
+  period: "2025-09-30",
+  "Total Revenue": 394_000_000_000,
+  "Gross Profit": 170_000_000_000,
+  "Operating Income": 112_000_000_000,
+  "Net Income": 97_000_000_000,
+  "Basic EPS": 6.43,
+  "Diluted EPS": 6.38,
 };
 
 const MOCK_BALANCE = {
-  fiscalDate: "2025-09-30",
-  period: "annual",
-  totalAssets: 352_000_000_000,
-  totalLiabilities: 290_000_000_000,
-  totalEquity: 62_000_000_000,
-  cashAndEquivalents: 29_000_000_000,
-  totalDebt: 108_000_000_000,
+  period: "2025-09-30",
+  "Total Assets": 352_000_000_000,
+  "Total Liabilities Net Minority Interest": 290_000_000_000,
+  "Stockholders Equity": 62_000_000_000,
+  "Cash And Cash Equivalents": 29_000_000_000,
+  "Total Debt": 108_000_000_000,
+};
+
+const MOCK_STATEMENTS = {
+  ticker: "AAPL",
+  income_statement: { ticker: "AAPL", earnings: [MOCK_INCOME], source: "aggregated" },
+  balance_sheet: { ticker: "AAPL", earnings: [MOCK_BALANCE], source: "aggregated" },
+  cashflow_statement: { ticker: "AAPL", earnings: [], source: "aggregated" },
+  source: "aggregated",
 };
 
 const MOCK_INSIDER_TX = {
@@ -131,6 +141,25 @@ const MOCK_NEWS = {
   sentiment: 0.72,
 };
 
+const MOCK_MARKET_NEWS = {
+  ...MOCK_NEWS,
+  id: "news-002",
+  title: "Market Closes Higher",
+  category: "markets",
+};
+
+const toLegacyNews = (article: typeof MOCK_NEWS) => ({
+  uuid: article.id,
+  headline: article.title,
+  summary: article.summary,
+  url: article.url,
+  source: article.source,
+  datetime: article.publishedAt,
+  related: article.symbols,
+  type: article.category,
+  image: article.imageUrl,
+});
+
 const MOCK_OPTION = {
   contractSymbol: "AAPL260620C00200000",
   type: "call",
@@ -156,8 +185,9 @@ const MOCK_SCREENER_RESULT = {
   marketCap: 3_100_000_000_000,
   peRatio: 32.5,
   dividendYield: 0.53,
+  beta: 1.24,
+  revenueGrowthYoy: 8.5,
   sector: "Technology",
-  industry: "Consumer Electronics",
   volume: 45_000_000,
   rsi14: 55.2,
 };
@@ -239,45 +269,46 @@ const MOCK_QUOTA = {
 // --- MSW server ---
 const server = setupServer(
   // Analyst
-  http.get(`${BASE}/vq/analyst/:symbol/consensus`, () => HttpResponse.json(MOCK_CONSENSUS)),
-  http.get(`${BASE}/vq/analyst/:symbol/price-targets`, () =>
-    HttpResponse.json({ data: [MOCK_PRICE_TARGET] })
+  http.get(`${BASE}/vq/analyst-consensus/:symbol`, () => HttpResponse.json(MOCK_CONSENSUS)),
+  http.get(`${BASE}/vq/analyst-targets/:symbol`, () =>
+    HttpResponse.json({ targets: [MOCK_PRICE_TARGET] })
   ),
-  http.get(`${BASE}/vq/analyst/:symbol/ratings`, () => HttpResponse.json({ data: [MOCK_RATING] })),
+  http.get(`${BASE}/vq/upgrades-downgrades/:symbol`, () =>
+    HttpResponse.json({ upgrades_downgrades: [MOCK_RATING] })
+  ),
 
   // Earnings
-  http.get(`${BASE}/vq/earnings/:symbol/history`, () =>
-    HttpResponse.json({ data: [MOCK_EARNINGS] })
-  ),
   http.get(`${BASE}/vq/earnings/calendar`, () => HttpResponse.json({ data: [MOCK_CALENDAR] })),
+  http.get(`${BASE}/vq/earnings/:symbol`, () => HttpResponse.json({ history: [MOCK_EARNINGS] })),
 
   // Fundamentals
-  http.get(`${BASE}/vq/fundamentals/:symbol/income`, () =>
-    HttpResponse.json({ data: [MOCK_INCOME] })
-  ),
-  http.get(`${BASE}/vq/fundamentals/:symbol/balance-sheet`, () =>
-    HttpResponse.json({ data: [MOCK_BALANCE] })
-  ),
+  http.get(`${BASE}/vq/fundamentals/:symbol/statements`, () => HttpResponse.json(MOCK_STATEMENTS)),
   http.get(`${BASE}/vq/fundamentals/:symbol`, () => HttpResponse.json(MOCK_FUNDAMENTAL)),
 
   // Insider
-  http.get(`${BASE}/vq/insider/:symbol/transactions`, () =>
-    HttpResponse.json({ data: [MOCK_INSIDER_TX] })
+  http.get(`${BASE}/vq/insider/:symbol`, () =>
+    HttpResponse.json({ ...MOCK_INSIDER_SUMMARY, trades: [MOCK_INSIDER_TX] })
   ),
-  http.get(`${BASE}/vq/insider/:symbol/summary`, () => HttpResponse.json(MOCK_INSIDER_SUMMARY)),
 
   // News
-  http.get(`${BASE}/vq/news/:id`, ({ params }) => {
-    if (params.id === "news-001") return HttpResponse.json(MOCK_NEWS);
-    return HttpResponse.json({ data: [MOCK_NEWS] });
+  http.get(`${BASE}/vq/news/articles/:id`, () =>
+    HttpResponse.json(toLegacyNews(MOCK_NEWS))
+  ),
+  http.get(`${BASE}/vq/news/:symbol`, ({ params, request }) => {
+    requestedNewsLimit = new URL(request.url).searchParams.get("limit");
+    requestedNewsSymbols.push(String(params.symbol));
+    if (params.symbol === "news-001") return HttpResponse.json(toLegacyNews(MOCK_NEWS));
+    return HttpResponse.json({
+      ticker: params.symbol,
+      articles: [toLegacyNews(MOCK_NEWS), toLegacyNews(MOCK_MARKET_NEWS)],
+    });
   }),
-  http.get(`${BASE}/vq/news`, () => HttpResponse.json({ data: [MOCK_NEWS] })),
 
   // Options
   http.get(`${BASE}/vq/options/:symbol/expirations`, () =>
     HttpResponse.json({ data: ["2026-06-20", "2026-07-18", "2026-08-15"] })
   ),
-  http.get(`${BASE}/vq/options/:symbol`, () =>
+  http.get(`${BASE}/vq/options/:symbol/chain`, () =>
     HttpResponse.json({
       symbol: "AAPL",
       expirations: ["2026-06-20"],
@@ -286,20 +317,25 @@ const server = setupServer(
   ),
 
   // Screener
-  http.get(`${BASE}/vq/screener`, () =>
-    HttpResponse.json({
+  http.get(`${BASE}/vq/screener`, ({ request }) => {
+    requestedScreenerParams = new URL(request.url).searchParams;
+    return HttpResponse.json({
+      status: "ok",
       data: [MOCK_SCREENER_RESULT],
-      has_more: false,
-      cursor: null,
-    })
-  ),
+      page_info: { has_next: false, cursor: null },
+    });
+  }),
 
   // Technicals
-  http.get(`${BASE}/vq/technicals/:symbol`, () => HttpResponse.json(MOCK_TECHNICAL)),
+  http.get(`${BASE}/vq/technical/:symbol`, () => HttpResponse.json(MOCK_TECHNICAL)),
 
   // Developer
   http.get(`${BASE}/vq/developer/keys`, () => HttpResponse.json(MOCK_KEYS)),
-  http.post(`${BASE}/vq/developer/keys`, () => HttpResponse.json(MOCK_KEY_CREATED)),
+  http.post(`${BASE}/vq/developer/keys`, async ({ request }) => {
+    const body = (await request.json()) as { scopes?: unknown };
+    requestedDeveloperScopes = body.scopes;
+    return HttpResponse.json(MOCK_KEY_CREATED);
+  }),
   http.delete(`${BASE}/vq/developer/keys/:keyId`, () => HttpResponse.json({}, { status: 200 })),
   http.get(`${BASE}/vq/developer/usage/daily`, () => HttpResponse.json(MOCK_DAILY_USAGE)),
   http.get(`${BASE}/vq/developer/usage`, () => HttpResponse.json(MOCK_USAGE)),
@@ -394,29 +430,10 @@ describe("Fundamentals resource", () => {
   });
 
   it("gets income statements", async () => {
-    const statements = await client.fundamentals.incomeStatement("AAPL");
-    expect(statements).toHaveLength(1);
-    expect(statements[0].revenue).toBe(394_000_000_000);
-  });
-
-  it("gets income statements with period option", async () => {
-    const statements = await client.fundamentals.incomeStatement("AAPL", {
-      period: "quarterly",
-    });
-    expect(statements).toHaveLength(1);
-  });
-
-  it("gets balance sheets", async () => {
-    const sheets = await client.fundamentals.balanceSheet("AAPL");
-    expect(sheets).toHaveLength(1);
-    expect(sheets[0].totalAssets).toBe(352_000_000_000);
-  });
-
-  it("gets balance sheets with period option", async () => {
-    const sheets = await client.fundamentals.balanceSheet("AAPL", {
-      period: "quarterly",
-    });
-    expect(sheets).toHaveLength(1);
+    const statements = await client.fundamentals.statements("AAPL");
+    expect(statements.ticker).toBe("AAPL");
+    expect(statements.income_statement.earnings[0]["Total Revenue"]).toBe(394_000_000_000);
+    expect(statements.balance_sheet.earnings[0]["Total Assets"]).toBe(352_000_000_000);
   });
 });
 
@@ -444,24 +461,35 @@ describe("Insider resource", () => {
 // === News ===
 describe("News resource", () => {
   it("lists news articles", async () => {
-    const articles = await client.news.list();
-    expect(articles).toHaveLength(1);
+    const articles = await client.news.list("AAPL");
+    expect(articles).toHaveLength(2);
     expect(articles[0].title).toContain("Apple");
   });
 
   it("lists news with symbol filter", async () => {
-    const articles = await client.news.list({ symbols: ["AAPL"], limit: 5 });
+    requestedNewsLimit = null;
+    requestedNewsSymbols = [];
+    const articles = await client.news.list({ symbols: ["AAPL"], limit: 1 });
     expect(articles).toHaveLength(1);
+    expect(requestedNewsLimit).toBe("1");
+  });
+
+  it("lists and deduplicates news across symbols", async () => {
+    requestedNewsSymbols = [];
+    const articles = await client.news.list({ symbols: ["AAPL", "MSFT"], limit: 5 });
+    expect(requestedNewsSymbols).toEqual(["AAPL", "MSFT"]);
+    expect(articles).toHaveLength(2);
   });
 
   it("lists news with category filter", async () => {
-    const articles = await client.news.list({ category: "earnings" });
+    const articles = await client.news.list({ symbols: ["AAPL"], category: "earnings" });
     expect(articles).toHaveLength(1);
   });
 
   it("gets a single article", async () => {
     const article = await client.news.get("news-001");
     expect(article.id).toBe("news-001");
+    expect(article.title).toContain("Apple");
     expect(article.source).toBe("Reuters");
   });
 });
@@ -509,16 +537,53 @@ describe("Screener resource", () => {
       peMin: 10,
       peMax: 50,
       dividendYieldMin: 0.5,
+      changeMin: -5,
+      betaMax: 2,
+      revenueGrowthMin: 3,
+      rsiMax: 70,
+      volumeMin: 100_000,
       sector: "Technology",
-      industry: "Consumer Electronics",
-      country: "US",
-      sortBy: "price",
+      sortBy: "market_cap",
       sortOrder: "asc",
       limit: 25,
     })) {
       results.push(item);
     }
     expect(results).toHaveLength(1);
+    expect(requestedScreenerParams?.get("market_cap_min")).toBe("1000000000");
+    expect(requestedScreenerParams?.get("dividend_yield_min")).toBe("0.5");
+    expect(requestedScreenerParams?.get("sector")).toBe("Technology");
+    expect(requestedScreenerParams?.get("sort_order")).toBe("asc");
+  });
+
+  it("follows the cursor returned by page_info", async () => {
+    const requestedCursors: string[] = [];
+    server.use(
+      http.get(`${BASE}/vq/screener`, ({ request }) => {
+        const cursor = new URL(request.url).searchParams.get("cursor");
+        requestedCursors.push(cursor ?? "");
+        return HttpResponse.json({
+          status: "ok",
+          data: [
+            {
+              ...MOCK_SCREENER_RESULT,
+              symbol: cursor ? "MSFT" : "AAPL",
+            },
+          ],
+          page_info: cursor
+            ? { has_next: false, cursor: null }
+            : { has_next: true, cursor: "1" },
+        });
+      })
+    );
+
+    const results: string[] = [];
+    for await (const stock of client.screener.run({ limit: 1 })) {
+      results.push(stock.symbol);
+    }
+
+    expect(results).toEqual(["AAPL", "MSFT"]);
+    expect(requestedCursors).toEqual(["", "1"]);
   });
 });
 
@@ -556,6 +621,7 @@ describe("Developer resource", () => {
     });
     expect(key.rawKey).toContain("vq_live_");
     expect(key.label).toBe("Production");
+    expect(requestedDeveloperScopes).toEqual(["read"]);
   });
 
   it("revokes a key", async () => {

@@ -30,7 +30,14 @@ export {
 // Resources
 export { Quotes } from "./resources/quotes";
 export { Fundamentals } from "./resources/fundamentals";
-export type { FundamentalResponse, IncomeStatement, BalanceSheet } from "./resources/fundamentals";
+export type {
+  FundamentalResponse,
+  IncomeStatement,
+  BalanceSheet,
+  StatementSection,
+  StatementData,
+  FinancialStatementsResponse,
+} from "./resources/fundamentals";
 export { Technicals } from "./resources/technicals";
 export type { CandleData, IndicatorValue, TechnicalResponse } from "./resources/technicals";
 export { News } from "./resources/news";
@@ -46,11 +53,20 @@ export type { InsiderTransaction, InsiderSummary } from "./resources/insider";
 export { Profile } from "./resources/profile";
 export type { ProfileResponse, CompanyInfo, LocationInfo } from "./resources/profile";
 export { Sentiment } from "./resources/sentiment";
-export type { SentimentResponse, SocialSentiment, NewsSentimentBreakdown } from "./resources/sentiment";
+export type {
+  SentimentResponse,
+  SocialSentiment,
+  NewsSentimentBreakdown,
+} from "./resources/sentiment";
 export { Historical } from "./resources/historical";
 export type { HistoricalResponse, HistoricalBar } from "./resources/historical";
 export { ETF } from "./resources/etf";
 export type { ETFResponse } from "./resources/etf";
+export { AI } from "./resources/ai";
+export type { AIChunk } from "./resources/ai";
+export { Screener } from "./resources/screener";
+export type { ScreenerFilters, ScreenerResult } from "./resources/screener";
+export { WebhooksResource } from "./resources/webhooks";
 export type { WebhookSubscription, CreateWebhookParams } from "./resources/webhooks";
 export { Developer } from "./resources/developer";
 export type {

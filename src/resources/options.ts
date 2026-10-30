@@ -40,9 +40,13 @@ export class Options {
     const params: Record<string, string> = {};
     if (options?.expiration) params.expiration = options.expiration;
     if (options?.type) params.type = options.type;
-    return this.client.request<OptionsChain>("GET", `/vq/options/${encodeURIComponent(symbol)}/chain`, {
-      params,
-    });
+    return this.client.request<OptionsChain>(
+      "GET",
+      `/vq/options/${encodeURIComponent(symbol)}/chain`,
+      {
+        params,
+      }
+    );
   }
 
   /** Get available expiration dates for a symbol. */

@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Client resource namespaces** — expose AI, developer, screener, and webhook resources on the client.
+
+### Changed
+
+- **News category filtering** — apply the accepted category option to returned articles.
+
+### Fixed
+
+- **Collector contract alignment** — type nested statement responses and align resource test routes and envelopes with current endpoints.
+- **News resource contract** — forward limits, support each requested symbol, deduplicate results, and normalize legacy collector fields; use the article-detail route for ID lookups.
+
 ## [1.0.0] - 2026-05-29
 
 ### Changed

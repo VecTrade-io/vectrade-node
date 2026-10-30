@@ -252,6 +252,17 @@ describe("client.request() – successful request", () => {
     expect(data.price).toBe(195);
   });
 
+  it("unwraps successful VQ response envelopes", async () => {
+    server.use(
+      http.get(`${BASE}/test`, () =>
+        HttpResponse.json({ status: "ok", data: { symbol: "AAPL", price: 195 } })
+      )
+    );
+    const client = makeClient({ maxRetries: 0 });
+    const data = await client.request<{ symbol: string; price: number }>("GET", "/test");
+    expect(data).toEqual({ symbol: "AAPL", price: 195 });
+  });
+
   it("sends X-API-Key header", async () => {
     let apiKeyHeader: string | null = null;
     server.use(
