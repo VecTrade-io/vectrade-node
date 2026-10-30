@@ -248,9 +248,9 @@ export class VecTrade {
           const metadata = Object.fromEntries(
             Object.entries(payload).filter(([key]) => key !== "status" && key !== "data")
           );
-          return (Object.keys(metadata).length > 0
-            ? { data: payload.data, ...metadata }
-            : payload.data) as T;
+          return (
+            Object.keys(metadata).length > 0 ? { data: payload.data, ...metadata } : payload.data
+          ) as T;
         }
         return payload as T;
       } catch (error) {

@@ -61,11 +61,7 @@ export class Quotes {
     >("GET", "/vq/quotes/batch", {
       params: { tickers: symbols.join(",") },
     });
-    const data = Array.isArray(response)
-      ? response
-      : "data" in response
-        ? response.data
-        : response;
+    const data = Array.isArray(response) ? response : "data" in response ? response.data : response;
     const quotes = Array.isArray(data) ? data : Object.values(data);
     return quotes.map(normalizeQuote);
   }

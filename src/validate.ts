@@ -16,11 +16,7 @@ export function validateSymbol(symbol: string, paramName = "symbol"): void {
 /**
  * Validate that an array of symbols is non-empty with valid entries.
  */
-export function validateSymbols(
-  symbols: string[],
-  paramName = "symbols",
-  maxItems?: number
-): void {
+export function validateSymbols(symbols: string[], paramName = "symbols", maxItems?: number): void {
   if (!Array.isArray(symbols) || symbols.length === 0) {
     throw new ValidationError(`${paramName} must be a non-empty array`, {
       status: 0,

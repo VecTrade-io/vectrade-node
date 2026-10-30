@@ -291,9 +291,7 @@ const server = setupServer(
   ),
 
   // News
-  http.get(`${BASE}/vq/news/articles/:id`, () =>
-    HttpResponse.json(toLegacyNews(MOCK_NEWS))
-  ),
+  http.get(`${BASE}/vq/news/articles/:id`, () => HttpResponse.json(toLegacyNews(MOCK_NEWS))),
   http.get(`${BASE}/vq/news/:symbol`, ({ params, request }) => {
     requestedNewsLimit = new URL(request.url).searchParams.get("limit");
     requestedNewsSymbols.push(String(params.symbol));
@@ -570,9 +568,7 @@ describe("Screener resource", () => {
               symbol: cursor ? "MSFT" : "AAPL",
             },
           ],
-          page_info: cursor
-            ? { has_next: false, cursor: null }
-            : { has_next: true, cursor: "1" },
+          page_info: cursor ? { has_next: false, cursor: null } : { has_next: true, cursor: "1" },
         });
       })
     );

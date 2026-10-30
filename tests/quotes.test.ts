@@ -108,9 +108,9 @@ describe("Quotes resource", () => {
     });
 
     it("rejects more than twenty symbols before making a request", async () => {
-      await expect(client.quotes.batch(Array.from({ length: 21 }, (_, index) => `T${index}`))).rejects.toThrow(
-        "no more than 20"
-      );
+      await expect(
+        client.quotes.batch(Array.from({ length: 21 }, (_, index) => `T${index}`))
+      ).rejects.toThrow("no more than 20");
     });
   });
 

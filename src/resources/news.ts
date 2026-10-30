@@ -66,7 +66,7 @@ export class News {
   ): Promise<NewsArticle[]> {
     // If string passed directly, use the symbol-specific endpoint
     const symbols =
-      typeof symbolOrOptions === "string" ? [symbolOrOptions] : symbolOrOptions?.symbols ?? [];
+      typeof symbolOrOptions === "string" ? [symbolOrOptions] : (symbolOrOptions?.symbols ?? []);
     if (symbols.length === 0 || symbols.some((item) => !item.trim())) {
       throw new Error("A symbol is required. Pass a symbol string or options.symbols.");
     }
@@ -84,7 +84,9 @@ export class News {
       )
     );
     const uniqueArticles = new Map<string, NewsArticle>();
-    for (const article of responses.flatMap((response) => response.articles.map(normalizeArticle))) {
+    for (const article of responses.flatMap((response) =>
+      response.articles.map(normalizeArticle)
+    )) {
       const key = article.id || `${article.title}\0${article.publishedAt}\0${article.source}`;
       if (!uniqueArticles.has(key)) uniqueArticles.set(key, article);
     }

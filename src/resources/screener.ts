@@ -33,7 +33,15 @@ export interface ScreenerFilters {
   rsiMax?: number;
   volumeMin?: number;
   sector?: string;
-  sortBy?: "market_cap" | "pe_ratio" | "dividend_yield" | "volume" | "change_pct" | "rsi_14" | "beta" | "revenue_growth_yoy";
+  sortBy?:
+    | "market_cap"
+    | "pe_ratio"
+    | "dividend_yield"
+    | "volume"
+    | "change_pct"
+    | "rsi_14"
+    | "beta"
+    | "revenue_growth_yoy";
   sortOrder?: "asc" | "desc";
   limit?: number;
 }
@@ -70,8 +78,10 @@ export class Screener {
       if (filters.changeMax !== undefined) params.change_max = String(filters.changeMax);
       if (filters.betaMin !== undefined) params.beta_min = String(filters.betaMin);
       if (filters.betaMax !== undefined) params.beta_max = String(filters.betaMax);
-      if (filters.revenueGrowthMin !== undefined) params.revenue_growth_min = String(filters.revenueGrowthMin);
-      if (filters.revenueGrowthMax !== undefined) params.revenue_growth_max = String(filters.revenueGrowthMax);
+      if (filters.revenueGrowthMin !== undefined)
+        params.revenue_growth_min = String(filters.revenueGrowthMin);
+      if (filters.revenueGrowthMax !== undefined)
+        params.revenue_growth_max = String(filters.revenueGrowthMax);
       if (filters.rsiMin !== undefined) params.rsi_min = String(filters.rsiMin);
       if (filters.rsiMax !== undefined) params.rsi_max = String(filters.rsiMax);
       if (filters.volumeMin !== undefined) params.volume_min = String(filters.volumeMin);
